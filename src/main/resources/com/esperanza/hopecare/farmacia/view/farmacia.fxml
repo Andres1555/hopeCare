@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="15" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esperanza.hopecare.farmacia.view.FarmaciaController">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20" />
+    </padding>
+    <GridPane hgap="10" vgap="10">
+        <Label text="Receta médica:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <ComboBox fx:id="cbRecetas" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="300"/>
+        
+        <Label text="Medicamento:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+        <ComboBox fx:id="cbMedicamentos" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="300"/>
+        
+        <Label text="Cantidad:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+        <Spinner fx:id="spCantidad" GridPane.columnIndex="1" GridPane.rowIndex="2" editable="true"/>
+        
+        <Button fx:id="btnEntregar" text="Registrar entrega" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2" onAction="#btnEntregarClick" />
+    </GridPane>
+</VBox>

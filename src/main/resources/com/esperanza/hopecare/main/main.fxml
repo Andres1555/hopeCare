@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esperanza.hopecare.main.MainController">
+    <center>
+        <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE">
+            <Tab text="Registro de Médicos" closable="false">
+                <fx:include source="../registro/view/registro_medico.fxml" />
+            </Tab>
+            <Tab text="Agendar Cita" closable="false">
+                <fx:include source="../citas/view/citas.fxml" />
+            </Tab>
+            <Tab text="Consulta Médica" closable="false">
+                <fx:include source="../consulta/view/consulta.fxml" />
+            </Tab>
+            <Tab text="Farmacia" closable="false">
+                <fx:include source="../farmacia/view/farmacia.fxml" />
+            </Tab>
+            <Tab text="Laboratorio" closable="false">
+                <fx:include source="../laboratorio/view/laboratorio.fxml" />
+            </Tab>
+            <Tab text="Facturación" closable="false">
+                <fx:include source="../facturacion/view/facturacion.fxml" />
+            </Tab>
+            <Tab text="Dashboard" closable="false">
+                <fx:include source="../dashboard/view/dashboard.fxml" />
+            </Tab>
+        </TabPane>
+    </center>
+</BorderPane>
