@@ -175,44 +175,37 @@ public class CitasController implements ICitaView {
         CitaPresenter dialogPresenter = new CitaPresenter(new ICitaView() {
             @Override public void mostrarCitasExistentes(List<Cita> citas) {}
             @Override public void mostrarHorariosDisponibles(List<LocalTime> bloques) {
-                Platform.runLater(() -> {
-                    cbHorarios.getItems().clear();
-                    if (bloques.isEmpty()) {
-                        cbHorarios.setDisable(true);
-                        btnReservar.setDisable(true);
-                        cbHorarios.getItems().add("No hay horarios disponibles");
-                    } else {
-                        for (LocalTime t : bloques) cbHorarios.getItems().add(t.toString());
-                        cbHorarios.setDisable(false);
-                        btnReservar.setDisable(false);
-                    }
-                });
+                cbHorarios.getItems().clear();
+                if (bloques.isEmpty()) {
+                    cbHorarios.setDisable(true);
+                    btnReservar.setDisable(true);
+                    cbHorarios.getItems().add("No hay horarios disponibles");
+                } else {
+                    for (LocalTime t : bloques) cbHorarios.getItems().add(t.toString());
+                    cbHorarios.setDisable(false);
+                    btnReservar.setDisable(false);
+                }
             }
             @Override public void mostrarDiasDisponibles(List<Integer> diasSemana) {
-                Platform.runLater(() -> {
-                    cbDias.getItems().clear();
-                    if (diasSemana.isEmpty()) {
-                        cbDias.setDisable(true);
-                        cbDias.setPromptText("Sin días disponibles");
-                        return;
-                    }
-                    for (int d : diasSemana) cbDias.getItems().add(d + " - " + NOMBRES_DIAS[d]);
-                    cbDias.setDisable(false);
-                    cbDias.setPromptText("Seleccione un día");
-                });
+                cbDias.getItems().clear();
+                if (diasSemana.isEmpty()) {
+                    cbDias.setDisable(true);
+                    cbDias.setPromptText("Sin días disponibles");
+                    return;
+                }
+                for (int d : diasSemana) cbDias.getItems().add(d + " - " + NOMBRES_DIAS[d]);
+                cbDias.setDisable(false);
+                cbDias.setPromptText("Seleccione un día");
             }
             @Override public int getDiaSeleccionado() { return 0; }
             @Override public void mostrarMensajeError(String mensaje) {
-                Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.ERROR, mensaje);
-                    alert.showAndWait();
-                });
+                Alert alert = new Alert(Alert.AlertType.ERROR, mensaje);
+                alert.showAndWait();
             }
             @Override public void mostrarMensajeExito(String mensaje) {
-                Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, mensaje);
-                    alert.showAndWait();
-                });
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, mensaje);
+                alert.showAndWait();
+                dialog.close();
             }
             @Override public void limpiarCampos() {}
             @Override public int getIdPacienteSeleccionado() { return idPacSeleccionado[0]; }
@@ -259,11 +252,8 @@ public class CitasController implements ICitaView {
             dialogPresenter.actualizarHorariosDisponibles(idMedSeleccionado[0], dpFecha.getValue());
         });
 
-        final boolean[] reservaExitosa = {false};
         btnReservar.setOnAction(e -> {
             dialogPresenter.reservarCita();
-            reservaExitosa[0] = true;
-            dialog.close();
         });
 
         VBox pacienteSection = new VBox(5,
@@ -310,7 +300,7 @@ public class CitasController implements ICitaView {
 
     @Override
     public void mostrarCitasExistentes(List<Cita> citas) {
-        Platform.runLater(() -> citasList.setAll(citas));
+        citasList.setAll(citas);
     }
 
     @Override
