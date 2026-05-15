@@ -48,6 +48,14 @@ Ubicada en `src/main/java/com/esperanza/hopecare/modules`. Cada módulo implemen
 *   **SQLite** (Base de datos local embebida)
 *   **SLF4J** (Logging opcional)
 
+### Edición de citas (doble clic)
+
+Haciendo doble clic en una fila de la tabla de citas se abre un diálogo que muestra la información completa de la cita y permite editar:
+- **Médico**: reasignar a otro médico mediante un ComboBox.
+- **Fecha y Horario**: cambiar la fecha (DatePicker) y hora (ComboBox con slots de 30 min).
+- **Estado**: modificar entre PROGRAMADA, CANCELADA, ATENDIDA, NO_ASISTIO.
+- **Guardar**: persiste los cambios vía `CitaDAO.actualizarCita()` y refresca la tabla.
+
 ## Base de Datos
 
 El sistema utiliza SQLite. El archivo de base de datos se genera como `sisgeho.db` en la raíz del proyecto. Para inicializar las tablas, ejecutar el script `schema.sql` sobre la base generada.

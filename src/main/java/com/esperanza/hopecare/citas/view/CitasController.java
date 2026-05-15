@@ -1,5 +1,6 @@
 package com.esperanza.hopecare.citas.view;
 
+import com.esperanza.hopecare.modules.citas_consultas.dao.CitaDAO;
 import com.esperanza.hopecare.modules.citas_consultas.model.Cita;
 import com.esperanza.hopecare.modules.citas_consultas.presenter.CitaPresenter;
 import com.esperanza.hopecare.modules.citas_consultas.view.ICitaView;
@@ -15,6 +16,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
@@ -22,6 +24,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -61,6 +64,13 @@ public class CitasController implements ICitaView {
 
         citasList = FXCollections.observableArrayList();
         tvCitas.setItems(citasList);
+
+        tvCitas.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                Cita sel = tvCitas.getSelectionModel().getSelectedItem();
+                if (sel != null) abrirDialogoEditarCita(sel);
+            }
+        });
     }
 
     private void abrirDialogoNuevaCita() {
@@ -288,6 +298,103 @@ public class CitasController implements ICitaView {
         dialog.showAndWait();
 
         presenter.cargarCitasExistentes();
+    }
+
+    private void abrirDialogoEditarCita(Cita cita) {
+        CitaDAO citaDAO = new CitaDAO();
+        MedicoDAO medicoDAO = new MedicoDAO();
+        List<Medico> medicos = medicoDAO.listarTodos();
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Cita #" + cita.getIdCita());
+        dialog.setHeaderText("Paciente: " + cita.getPacienteNombre());
+
+        Label lblMedicoActual = new Label("Médico: " + cita.getMedicoNombre());
+        Label lblFechaActual = new Label("Fecha/Hora: " + cita.getFechaHora().format(dtf));
+        Label lblEstadoActual = new Label("Estado: " + cita.getEstado());
+
+        ComboBox<Medico> cbMedico = new ComboBox<>();
+        cbMedico.setPrefWidth(300);
+        cbMedico.getItems().addAll(medicos);
+        for (Medico m : medicos) {
+            if (m.getIdMedico() == cita.getIdMedico()) {
+                cbMedico.setValue(m);
+                break;
+            }
+        }
+
+        DatePicker dpFecha = new DatePicker(cita.getFechaHora().toLocalDate());
+
+        ObservableList<String> slots = FXCollections.observableArrayList();
+        for (int h = 7; h <= 19; h++) {
+            slots.add(String.format("%02d:00", h));
+            slots.add(String.format("%02d:30", h));
+        }
+        ComboBox<String> cbHora = new ComboBox<>(slots);
+        cbHora.setValue(cita.getFechaHora().toLocalTime().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")));
+
+        ComboBox<String> cbEstado = new ComboBox<>();
+        cbEstado.getItems().addAll("PROGRAMADA", "CANCELADA", "ATENDIDA", "NO_ASISTIO");
+        cbEstado.setValue(cita.getEstado());
+
+        Button btnGuardar = new Button("Guardar cambios");
+
+        btnGuardar.setOnAction(e -> {
+            Medico medSel = cbMedico.getValue();
+            LocalDate nuevaFecha = dpFecha.getValue();
+            String horaStr = cbHora.getValue();
+            String nuevoEstado = cbEstado.getValue();
+
+            if (medSel == null || nuevaFecha == null || horaStr == null || nuevoEstado == null) {
+                mostrarMensajeError("Complete todos los campos.");
+                return;
+            }
+
+            LocalTime nuevaHora = LocalTime.parse(horaStr);
+            LocalDateTime nuevaFechaHora = LocalDateTime.of(nuevaFecha, nuevaHora);
+
+            cita.setIdMedico(medSel.getIdMedico());
+            cita.setMedicoNombre(medSel.getNombre() + " " + medSel.getApellido());
+            cita.setFechaHora(nuevaFechaHora);
+            cita.setEstado(nuevoEstado);
+
+            if (citaDAO.actualizarCita(cita)) {
+                mostrarMensajeExito("Cita actualizada correctamente.");
+                dialog.close();
+                presenter.cargarCitasExistentes();
+            } else {
+                mostrarMensajeError("Error al actualizar la cita.");
+            }
+        });
+
+        VBox infoSection = new VBox(5,
+            new Label("— Información actual —"),
+            lblMedicoActual, lblFechaActual, lblEstadoActual
+        );
+        infoSection.setPadding(new Insets(0, 0, 10, 0));
+
+        GridPane editGrid = new GridPane();
+        editGrid.setHgap(10);
+        editGrid.setVgap(8);
+        editGrid.add(new Label("Nuevo médico:"), 0, 0);
+        editGrid.add(cbMedico, 1, 0);
+        editGrid.add(new Label("Nueva fecha:"), 0, 1);
+        editGrid.add(dpFecha, 1, 1);
+        editGrid.add(new Label("Nuevo horario:"), 0, 2);
+        editGrid.add(cbHora, 1, 2);
+        editGrid.add(new Label("Nuevo estado:"), 0, 3);
+        editGrid.add(cbEstado, 1, 3);
+
+        VBox content = new VBox(12, infoSection, new Label("— Editar —"), editGrid, btnGuardar);
+        content.setPadding(new Insets(15));
+
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().setPrefWidth(450);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
+
+        dialog.showAndWait();
     }
 
     @Override

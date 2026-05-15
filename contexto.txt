@@ -230,12 +230,12 @@ Principales tablas (script completo en sisgeho_schema.sql):
   pendientes, registra consulta (transacción), solicita exámenes y receta
   medicamentos con transaccionalidad explícita.
 - CitaDAO: Métodos obtenerCitasPorMedicoYFecha (para filtrar horarios),
-  insertarCita, actualizarEstado, obtenerCitasPorEstado,
-  listarTodasConNombres (todas las citas ORDER BY fecha DESC con JOINs) y
-  obtenerCitasPorEstadoConNombres (JOINs con persona para obtener nombres de
-  paciente y médico). El formato de fecha_hora es TEXT "yyyy-MM-dd HH:mm:ss".
-  Incluye parseFechaHora() que soporta formato canónico, ISO-8601 'T' y
-  epoch millis como respaldo para compatibilidad hacia atrás.
+  insertarCita, actualizarEstado, actualizarCita (update médico/fecha/estado),
+  obtenerCitasPorEstado, listarTodasConNombres (todas las citas ORDER BY fecha
+  DESC con JOINs) y obtenerCitasPorEstadoConNombres (JOINs con persona para
+  obtener nombres de paciente y médico). El formato de fecha_hora es TEXT
+  "yyyy-MM-dd HH:mm:ss". Incluye parseFechaHora() que soporta formato canónico,
+  ISO-8601 'T' y epoch millis como respaldo para compatibilidad hacia atrás.
 - Cita: Modelo con campos pacienteNombre y medicoNombre para mostrar nombres
   en lugar de IDs en la UI de consultas.
 - ConsultaDAO.insertarConsultaYActualizarEstado(): Transacción que inserta
@@ -345,6 +345,11 @@ LO COMPLETADO:
   y epoch millis. `insertarCita()` usa `setString()` con formato
   "yyyy-MM-dd HH:mm:ss" para evitar que el driver xerial sqlite-jdbc
   almacene epoch millis. CargarDatosPrueba también actualizado.
+- Nuevo método `CitaDAO.actualizarCita(Cita)` para modificar médico,
+  fecha/hora y estado de una cita existente.
+- Nuevo método `CitasController.abrirDialogoEditarCita(Cita)`:
+  doble clic en la tabla abre un diálogo con información de la cita y
+  campos editables (médico, fecha, horario, estado) con botón guardar.
 - Fix en CitaDAO: todos los getTimestamp() reemplazados por parseFechaHora()
   que parsea el TEXT en formato "yyyy-MM-dd HH:mm:ss". insertarCita() usa
   setString() en lugar de setTimestamp() para evitar almacenar epoch millis.

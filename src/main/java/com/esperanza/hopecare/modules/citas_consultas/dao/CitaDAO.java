@@ -85,6 +85,21 @@ public class CitaDAO {
         }
     }
     
+    public boolean actualizarCita(Cita cita) {
+        String sql = "UPDATE cita SET id_medico = ?, fecha_hora = ?, estado = ? WHERE id_cita = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cita.getIdMedico());
+            pstmt.setString(2, cita.getFechaHora().format(DT_FMT));
+            pstmt.setString(3, cita.getEstado());
+            pstmt.setInt(4, cita.getIdCita());
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public boolean actualizarEstado(int idCita, String nuevoEstado) {
         String sql = "UPDATE cita SET estado = ? WHERE id_cita = ?";
         try (Connection conn = DatabaseConnection.getConnection();
