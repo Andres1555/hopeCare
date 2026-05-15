@@ -39,17 +39,24 @@ public class HopecareApp extends Application {
     }
 
     private void inicializarBaseDatos() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            if (!tablasExisten(conn)) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            if (!tablaExiste(stmt, "persona")) {
                 System.out.println("Base de datos vacía. Creando esquema...");
                 ejecutarScriptSQL(conn, "/sisgeho_schema.sql");
                 System.out.println("Esquema creado. Insertando datos de prueba...");
                 com.esperanza.hopecare.common.db.CargarDatosPrueba.main(new String[]{});
-            } else if (baseDatosVacia(conn)) {
-                System.out.println("Base de datos sin datos. Insertando datos de prueba...");
-                com.esperanza.hopecare.common.db.CargarDatosPrueba.main(new String[]{});
             } else {
-                System.out.println("Base de datos lista.");
+                System.out.println("Base de datos existente. Verificando migraciones...");
+                migrarColumnas(stmt);
+
+                if (baseDatosVacia(stmt)) {
+                    System.out.println("Insertando datos de prueba...");
+                    com.esperanza.hopecare.common.db.CargarDatosPrueba.main(new String[]{});
+                } else {
+                    System.out.println("Base de datos lista.");
+                }
             }
         } catch (Exception e) {
             System.err.println("Error al inicializar la base de datos: " + e.getMessage());
@@ -57,17 +64,38 @@ public class HopecareApp extends Application {
         }
     }
 
-    private boolean tablasExisten(Connection conn) throws Exception {
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='persona'")) {
+    private boolean tablaExiste(Statement stmt, String nombre) throws Exception {
+        try (ResultSet rs = stmt.executeQuery(
+                "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='" + nombre + "'")) {
             return rs.next() && rs.getInt(1) > 0;
         }
     }
 
-    private boolean baseDatosVacia(Connection conn) throws Exception {
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT count(*) FROM persona")) {
+    private boolean columnaExiste(Statement stmt, String tabla, String columna) throws Exception {
+        try (ResultSet rs = stmt.executeQuery("PRAGMA table_info(" + tabla + ")")) {
+            while (rs.next()) {
+                if (columna.equals(rs.getString("name"))) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean baseDatosVacia(Statement stmt) throws Exception {
+        try (ResultSet rs = stmt.executeQuery("SELECT count(*) FROM persona")) {
             return rs.next() && rs.getInt(1) == 0;
+        }
+    }
+
+    private void migrarColumnas(Statement stmt) throws Exception {
+        if (!columnaExiste(stmt, "persona", "nombre")) {
+            System.out.println("Migrando: agregando nombre/apellido/tipo_persona a persona...");
+            stmt.execute("ALTER TABLE persona ADD COLUMN tipo_persona TEXT NOT NULL DEFAULT 'PACIENTE'");
+            stmt.execute("ALTER TABLE persona ADD COLUMN nombre TEXT NOT NULL DEFAULT 'Sin'");
+            stmt.execute("ALTER TABLE persona ADD COLUMN apellido TEXT NOT NULL DEFAULT 'Nombre'");
+        }
+        if (!columnaExiste(stmt, "medico", "activo")) {
+            System.out.println("Migrando: agregando activo a medico...");
+            stmt.execute("ALTER TABLE medico ADD COLUMN activo INTEGER DEFAULT 1");
         }
     }
 
