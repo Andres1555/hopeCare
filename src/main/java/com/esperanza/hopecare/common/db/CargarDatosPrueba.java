@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class CargarDatosPrueba {
 
@@ -189,7 +190,7 @@ public class CargarDatosPrueba {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idPaciente);
             ps.setInt(2, idMedico);
-            ps.setString(3, fechaHora.toString());
+            ps.setString(3, fechaHora.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             ps.setString(4, estado);
             ps.executeUpdate();
         }

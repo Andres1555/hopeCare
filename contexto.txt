@@ -233,7 +233,9 @@ Principales tablas (script completo en sisgeho_schema.sql):
   insertarCita, actualizarEstado, obtenerCitasPorEstado,
   listarTodasConNombres (todas las citas ORDER BY fecha DESC con JOINs) y
   obtenerCitasPorEstadoConNombres (JOINs con persona para obtener nombres de
-  paciente y médico).
+  paciente y médico). El formato de fecha_hora es TEXT "yyyy-MM-dd HH:mm:ss".
+  Incluye parseFechaHora() que soporta formato canónico, ISO-8601 'T' y
+  epoch millis como respaldo para compatibilidad hacia atrás.
 - Cita: Modelo con campos pacienteNombre y medicoNombre para mostrar nombres
   en lugar de IDs en la UI de consultas.
 - ConsultaDAO.insertarConsultaYActualizarEstado(): Transacción que inserta
@@ -338,6 +340,16 @@ LO COMPLETADO:
   temporal del diálogo (causaba race condition). dialog.close() solo
   se llama en éxito. Filtros de tablas cambiados a FilteredList con
   setPredicate() para preservar selección del usuario al escribir.
+- Fix en CitaDAO: reemplazados todos los `rs.getTimestamp("fecha_hora")`
+  por `parseFechaHora(rs)` que parsea TEXT en formato canónico, ISO-8601
+  y epoch millis. `insertarCita()` usa `setString()` con formato
+  "yyyy-MM-dd HH:mm:ss" para evitar que el driver xerial sqlite-jdbc
+  almacene epoch millis. CargarDatosPrueba también actualizado.
+- Fix en CitaDAO: todos los getTimestamp() reemplazados por parseFechaHora()
+  que parsea el TEXT en formato "yyyy-MM-dd HH:mm:ss". insertarCita() usa
+  setString() en lugar de setTimestamp() para evitar almacenar epoch millis.
+- Fix en CargarDatosPrueba: insertarCita() usa el mismo formato de fecha
+  consistente para evitar incompatibilidad entre datos de prueba y nuevos.
 
 PENDIENTES / PRÓXIMOS PASOS:
 - Integrar completamente el login con roles (actualmente se pasa rol fijo
@@ -346,6 +358,15 @@ PENDIENTES / PRÓXIMOS PASOS:
 - Mejorar la validación de entrada y manejo de excepciones.
 - Escribir pruebas unitarias con JUnit (mock de DAOs).
 - Generar un único archivo JAR ejecutable con Maven Assembly Plugin.
+
+CORREGIDO (Mayo 2026):
+- Fix en CitaDAO: `insertarCita()` ahora usa `setString()` con formato "yyyy-MM-dd HH:mm:ss"
+  en lugar de `setTimestamp()` (que almacenaba epoch millis). Todos los SELECTs usan
+  `parseFechaHora()` con soporte multi-formato (espacio, ISO-8601 'T', epoch millis).
+- Fix en CargarDatosPrueba: `insertarCita()` usa el mismo formato consistente.
+- Esto resuelve el bug donde las citas creadas desde la UI no aparecían en la tabla
+  principal porque `getTimestamp()` fallaba al parsear epoch millis.
+- Si la BD ya tenía datos con formato epoch millis, borrar `sisgeho.db` para regenerar.
 
 ===============================================================================
 INSTRUCCIONES PARA EJECUTAR EL PROYECTO

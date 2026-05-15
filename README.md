@@ -53,3 +53,9 @@ Ubicada en `src/main/java/com/esperanza/hopecare/modules`. Cada módulo implemen
 El sistema utiliza SQLite. El archivo de base de datos se genera como `sisgeho.db` en la raíz del proyecto. Para inicializar las tablas, ejecutar el script `schema.sql` sobre la base generada.
 
 La aplicación crea las tablas automáticamente al ejecutar `CrearBaseDatos` e inserta datos de prueba con `CargarDatosPrueba`.
+
+### Formato de fechas en SQLite
+
+La columna `fecha_hora` de la tabla `cita` almacena los valores como TEXT en formato `"yyyy-MM-dd HH:mm:ss"`. Esto es crítico para el correcto funcionamiento de las funciones de fecha de SQLite (`DATE()`) y la lectura desde Java. El `CitaDAO` usa `parseFechaHora()` que maneja múltiples formatos (espacio, ISO-8601 con 'T', y epoch millis como respaldo). Al insertar, siempre se escribe en el formato canónico `"yyyy-MM-dd HH:mm:ss"`.
+
+**IMPORTANTE**: Si la base de datos fue creada con una versión anterior del código que usaba `setTimestamp()` (que almacenaba epoch millis), las citas NO se mostrarán en la tabla y se debe resetear la BD borrando `sisgeho.db` para que se regenere con el formato correcto.
