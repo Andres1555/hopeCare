@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CitasController implements ICitaView {
@@ -35,8 +36,6 @@ public class CitasController implements ICitaView {
 
     private CitaPresenter presenter;
     private ObservableList<Cita> citasList;
-
-    private static final String[] NOMBRES_DIAS = {"", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
 
     @FXML
     public void initialize() {
@@ -129,12 +128,22 @@ public class CitasController implements ICitaView {
         tvMedicos.getColumns().addAll(colMedId, colMedNombre, colMedEsp, colMedReg);
         tvMedicos.setItems(medicosFiltrados);
 
-        ComboBox<String> cbDias = new ComboBox<>();
-        cbDias.setPrefWidth(200);
-        cbDias.setDisable(true);
-        cbDias.setPromptText("Seleccione un médico");
-
+        final List<Integer> diasValidos = new ArrayList<>();
         DatePicker dpFecha = new DatePicker();
+        dpFecha.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                if (empty || date.isBefore(LocalDate.now())) {
+                    setDisable(true);
+                    return;
+                }
+                if (!diasValidos.isEmpty() && !diasValidos.contains(date.getDayOfWeek().getValue())) {
+                    setDisable(true);
+                    setStyle("-fx-text-fill: #bbb;");
+                }
+            }
+        });
 
         ComboBox<String> cbHorarios = new ComboBox<>();
         cbHorarios.setPrefWidth(200);
@@ -189,15 +198,19 @@ public class CitasController implements ICitaView {
                 }
             }
             @Override public void mostrarDiasDisponibles(List<Integer> diasSemana) {
-                cbDias.getItems().clear();
-                if (diasSemana.isEmpty()) {
-                    cbDias.setDisable(true);
-                    cbDias.setPromptText("Sin días disponibles");
-                    return;
+                diasValidos.clear();
+                diasValidos.addAll(diasSemana);
+                dpFecha.setValue(null);
+                if (!diasSemana.isEmpty()) {
+                    LocalDate today = LocalDate.now();
+                    for (int i = 0; i < 14; i++) {
+                        LocalDate d = today.plusDays(i);
+                        if (diasSemana.contains(d.getDayOfWeek().getValue())) {
+                            dpFecha.setValue(d);
+                            break;
+                        }
+                    }
                 }
-                for (int d : diasSemana) cbDias.getItems().add(d + " - " + NOMBRES_DIAS[d]);
-                cbDias.setDisable(false);
-                cbDias.setPromptText("Seleccione un día");
             }
             @Override public int getDiaSeleccionado() { return 0; }
             @Override public void mostrarMensajeError(String mensaje) {
@@ -224,20 +237,9 @@ public class CitasController implements ICitaView {
             if (sel != null) {
                 dialogPresenter.cargarDiasDisponibles(sel.getIdMedico());
             } else {
-                cbDias.getItems().clear();
-                cbDias.setDisable(true);
-                cbDias.setPromptText("Seleccione un médico");
+                diasValidos.clear();
+                dpFecha.setValue(null);
             }
-        });
-
-        cbDias.setOnAction(e -> {
-            String val = cbDias.getValue();
-            if (val == null) return;
-            int diaSemana = Integer.parseInt(val.split(" - ")[0]);
-            LocalDate today = LocalDate.now();
-            LocalDate nextDate = today.with(DayOfWeek.of(diaSemana));
-            if (!nextDate.isAfter(today)) nextDate = nextDate.plusWeeks(1);
-            dpFecha.setValue(nextDate);
         });
 
         btnBuscar.setOnAction(e -> {
@@ -279,14 +281,12 @@ public class CitasController implements ICitaView {
         GridPane horarioGrid = new GridPane();
         horarioGrid.setHgap(10);
         horarioGrid.setVgap(10);
-        horarioGrid.add(new Label("Día disponible:"), 0, 0);
-        horarioGrid.add(cbDias, 1, 0);
-        horarioGrid.add(new Label("Fecha:"), 2, 0);
-        horarioGrid.add(dpFecha, 3, 0);
-        horarioGrid.add(btnBuscar, 0, 1, 4, 1);
-        horarioGrid.add(new Label("Horario:"), 0, 2);
-        horarioGrid.add(cbHorarios, 1, 2);
-        horarioGrid.add(btnReservar, 2, 2, 2, 1);
+        horarioGrid.add(new Label("Fecha:"), 0, 0);
+        horarioGrid.add(dpFecha, 1, 0);
+        horarioGrid.add(btnBuscar, 2, 0);
+        horarioGrid.add(new Label("Horario:"), 0, 1);
+        horarioGrid.add(cbHorarios, 1, 1);
+        horarioGrid.add(btnReservar, 2, 1);
 
         VBox content = new VBox(15, tablesRow, horarioGrid);
         content.setStyle("-fx-padding: 15;");

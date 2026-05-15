@@ -330,9 +330,10 @@ LO COMPLETADO:
 - Flujo de citas rediseñado: vista principal con tabla de citas existentes
   (todas, ORDER BY fecha DESC), botón "Agendar nueva cita" abre diálogo modal
   con MVP inline. El diálogo incluye buscador de pacientes, filtro de
-  especialidad + buscador de médicos, selector de días disponibles, auto-
-  asignación de fecha y horarios. Al reservar, publica NuevaCitaEvent y
-  refresca la tabla principal.
+  especialidad + buscador de médicos, DatePicker con DayCellFactory que
+  deshabilita días no laborales del médico, auto-asignación de fecha al
+  próximo día válido y horarios filtrados. Al reservar, publica NuevaCitaEvent
+  y refresca la tabla principal.
 - ConsultaController ahora implementa IConsultaView con MVP completo
   (delega en ConsultaPresenter), con diálogos modales que devuelven
   Integer (examen) y RecetaRequest (receta).
@@ -340,6 +341,10 @@ LO COMPLETADO:
   temporal del diálogo (causaba race condition). dialog.close() solo
   se llama en éxito. Filtros de tablas cambiados a FilteredList con
   setPredicate() para preservar selección del usuario al escribir.
+- UX en diálogo nueva cita: eliminado ComboBox redundante de días
+  disponibles. Ahora el DatePicker usa DayCellFactory para deshabilitar
+  los días que el médico no atiende, auto-asignándose al próximo día
+  válido al seleccionar un médico.
 - Fix en CitaDAO: reemplazados todos los `rs.getTimestamp("fecha_hora")`
   por `parseFechaHora(rs)` que parsea TEXT en formato canónico, ISO-8601
   y epoch millis. `insertarCita()` usa `setString()` con formato
@@ -350,11 +355,6 @@ LO COMPLETADO:
 - Nuevo método `CitasController.abrirDialogoEditarCita(Cita)`:
   doble clic en la tabla abre un diálogo con información de la cita y
   campos editables (médico, fecha, horario, estado) con botón guardar.
-- Fix en CitaDAO: todos los getTimestamp() reemplazados por parseFechaHora()
-  que parsea el TEXT en formato "yyyy-MM-dd HH:mm:ss". insertarCita() usa
-  setString() en lugar de setTimestamp() para evitar almacenar epoch millis.
-- Fix en CargarDatosPrueba: insertarCita() usa el mismo formato de fecha
-  consistente para evitar incompatibilidad entre datos de prueba y nuevos.
 
 PENDIENTES / PRÓXIMOS PASOS:
 - Integrar completamente el login con roles (actualmente se pasa rol fijo

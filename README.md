@@ -62,6 +62,8 @@ El sistema utiliza SQLite. El archivo de base de datos se genera como `sisgeho.d
 
 La aplicación crea las tablas automáticamente al ejecutar `CrearBaseDatos` e inserta datos de prueba con `CargarDatosPrueba`.
 
+En el diálogo de nueva cita, al seleccionar un médico el `DatePicker` restringe los días seleccionables a aquellos en los que el médico atiende (según la tabla `horario_atencion`). Los días no laborables aparecen deshabilitados visualmente.
+
 ### Formato de fechas en SQLite
 
 La columna `fecha_hora` de la tabla `cita` almacena los valores como TEXT en formato `"yyyy-MM-dd HH:mm:ss"`. Esto es crítico para el correcto funcionamiento de las funciones de fecha de SQLite (`DATE()`) y la lectura desde Java. El `CitaDAO` usa `parseFechaHora()` que maneja múltiples formatos (espacio, ISO-8601 con 'T', y epoch millis como respaldo). Al insertar, siempre se escribe en el formato canónico `"yyyy-MM-dd HH:mm:ss"`.
