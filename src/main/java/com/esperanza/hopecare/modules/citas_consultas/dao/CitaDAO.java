@@ -89,4 +89,34 @@ public class CitaDAO {
         } catch (SQLException e) { e.printStackTrace(); }
         return citas;
     }
+
+    public List<Cita> obtenerCitasPorEstadoConNombres(String estado) {
+        List<Cita> citas = new ArrayList<>();
+        String sql = "SELECT c.id_cita, c.id_paciente, c.id_medico, c.fecha_hora, c.estado, "
+                   + "pp.nombre AS p_nombre, pp.apellido AS p_apellido, "
+                   + "pm.nombre AS m_nombre, pm.apellido AS m_apellido "
+                   + "FROM cita c "
+                   + "JOIN paciente pa ON c.id_paciente = pa.id_paciente "
+                   + "JOIN persona pp ON pa.id_persona = pp.id_persona "
+                   + "JOIN medico me ON c.id_medico = me.id_medico "
+                   + "JOIN persona pm ON me.id_persona = pm.id_persona "
+                   + "WHERE c.estado = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, estado);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Cita c = new Cita();
+                c.setIdCita(rs.getInt("id_cita"));
+                c.setIdPaciente(rs.getInt("id_paciente"));
+                c.setIdMedico(rs.getInt("id_medico"));
+                c.setFechaHora(rs.getTimestamp("fecha_hora").toLocalDateTime());
+                c.setEstado(rs.getString("estado"));
+                c.setPacienteNombre(rs.getString("p_nombre") + " " + rs.getString("p_apellido"));
+                c.setMedicoNombre(rs.getString("m_nombre") + " " + rs.getString("m_apellido"));
+                citas.add(c);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return citas;
+    }
 }

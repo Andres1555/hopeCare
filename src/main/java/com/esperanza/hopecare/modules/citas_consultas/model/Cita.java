@@ -8,6 +8,8 @@ public class Cita {
     private int idMedico;
     private LocalDateTime fechaHora;
     private String estado;
+    private String pacienteNombre;
+    private String medicoNombre;
 
     public Cita() {}
 
@@ -18,7 +20,6 @@ public class Cita {
         this.estado = estado;
     }
 
-    // Getters and Setters
     public int getIdCita() { return idCita; }
     public void setIdCita(int idCita) { this.idCita = idCita; }
     public int getIdPaciente() { return idPaciente; }
@@ -29,4 +30,8 @@ public class Cita {
     public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+    public String getPacienteNombre() { return pacienteNombre; }
+    public void setPacienteNombre(String pacienteNombre) { this.pacienteNombre = pacienteNombre; }
+    public String getMedicoNombre() { return medicoNombre; }
+    public void setMedicoNombre(String medicoNombre) { this.medicoNombre = medicoNombre; }
 }

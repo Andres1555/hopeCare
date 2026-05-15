@@ -53,13 +53,13 @@ public class ConsultaController {
     }
 
     private void cargarCitas() {
-        List<Cita> citas = citaDAO.obtenerCitasPorEstado("PROGRAMADA");
+        List<Cita> citas = citaDAO.obtenerCitasPorEstadoConNombres("PROGRAMADA");
         citasList.clear();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         for (Cita c : citas) {
-            String texto = c.getIdCita() + " - Paciente: " + c.getIdPaciente() +
-                           " - Médico: " + c.getIdMedico() +
-                           " - " + c.getFechaHora().format(formatter);
+            String texto = c.getIdCita() + " - Paciente: " + c.getPacienteNombre() +
+                           " | Médico: " + c.getMedicoNombre() +
+                           " | " + c.getFechaHora().format(formatter);
             citasList.add(texto);
         }
         if (citasList.isEmpty()) {

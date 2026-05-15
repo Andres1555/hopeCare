@@ -5,30 +5,50 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox spacing="15" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esperanza.hopecare.citas.view.CitasController">
     <padding>
         <Insets top="20" right="20" bottom="20" left="20" />
     </padding>
-    
+
+    <HBox spacing="20">
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Pacientes disponibles:" style="-fx-font-weight: bold;" />
+            <TableView fx:id="tvPacientes" prefHeight="200">
+                <columns>
+                    <TableColumn text="ID" prefWidth="50" />
+                    <TableColumn text="Nombre" prefWidth="180" />
+                    <TableColumn text="Documento" prefWidth="120" />
+                </columns>
+            </TableView>
+        </VBox>
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Médicos disponibles:" style="-fx-font-weight: bold;" />
+            <TableView fx:id="tvMedicos" prefHeight="200">
+                <columns>
+                    <TableColumn text="ID" prefWidth="50" />
+                    <TableColumn text="Nombre" prefWidth="180" />
+                    <TableColumn text="Especialidad" prefWidth="120" />
+                    <TableColumn text="Registro" prefWidth="100" />
+                </columns>
+            </TableView>
+        </VBox>
+    </HBox>
+
     <GridPane hgap="10" vgap="10">
-        <Label text="ID Paciente:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-        <TextField fx:id="txtIdPaciente" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-        
-        <Label text="ID Médico:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-        <TextField fx:id="txtIdMedico" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-        
-        <Label text="Fecha:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-        <DatePicker fx:id="dpFecha" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-        
-        <Button fx:id="btnBuscar" text="Buscar horarios" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-        
-        <Label text="Horario disponible:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-        <ComboBox fx:id="cbHorarios" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-        
-        <Button fx:id="btnReservar" text="Reservar cita" GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.columnSpan="2" />
+        <Label text="Fecha:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <DatePicker fx:id="dpFecha" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+        <Button fx:id="btnBuscar" text="Buscar horarios" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+
+        <Label text="Horario disponible:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+        <ComboBox fx:id="cbHorarios" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+        <Button fx:id="btnReservar" text="Reservar cita" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2" />
     </GridPane>
 </VBox>

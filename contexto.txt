@@ -74,6 +74,8 @@ Patrones implementados:
 com.esperanza.hopecare
 │
 ├── common
+│   ├── model
+│   │   └── Persona.java                     (idPersona, nombre, apellido, documentoIdentidad)
 │   ├── db
 │   │   ├── DatabaseConnection.java          (Singleton, driver + conexión SQLite)
 │   │   ├── CrearBaseDatos.java              (Ejecuta schema.sql)
@@ -88,11 +90,11 @@ com.esperanza.hopecare
 ├── modules                                  (Capa de negocio)
 │   ├── citas_consultas                      (MVP - Citas y Consultas)
 │   │   ├── model
-│   │   │   ├── Cita.java
+│   │   │   ├── Cita.java                    (idCita, pacienteNombre, medicoNombre para display)
 │   │   │   ├── Consulta.java
 │   │   │   └── HorarioAtencion.java
 │   │   ├── dao
-│   │   │   ├── CitaDAO.java
+│   │   │   ├── CitaDAO.java                 (obtenerCitasPorEstadoConNombres con JOIN)
 │   │   │   ├── ConsultaDAO.java             (Transacción: inserta consulta + actualiza cita)
 │   │   │   └── HorarioAtencionDAO.java
 │   │   ├── presenter
@@ -105,7 +107,9 @@ com.esperanza.hopecare
 │   │           └── CitaConsoleView.java     (Implementación consola)
 │   ├── pacientes_medicos                    (CRUD)
 │   │   ├── model (Persona, Medico, Paciente, Especialidad)
-│   │   ├── dao (PersonaDAO, MedicoDAO, PacienteDAO, EspecialidadDAO)
+│   │   ├── dao
+│   │   │   ├── MedicoDAO.java               (insertarMedico, listarTodos con JOIN)
+│   │   │   └── PacienteDAO.java             (listarTodos con JOIN a persona)
 │   │   └── service
 │   ├── medicamentos_lab                     (Fachada)
 │   │   ├── model (Medicamento, Receta, DetalleReceta, EntregaMedicamento,
@@ -122,8 +126,8 @@ com.esperanza.hopecare
 │
 ├── citas                                    (Vista JavaFX - Citas)
 │   └── view
-│       ├── CitasController.java             (Implementa ICitaView)
-│       └── citas.fxml
+│       ├── CitasController.java             (Implementa ICitaView, TableViews paciente/médico)
+│       └── citas.fxml                       (TableView + DatePicker + ComboBox)
 │
 ├── consulta                                 (Vista JavaFX - Consultas)
 │   └── view
@@ -211,23 +215,36 @@ Principales tablas (script completo en sisgeho_schema.sql):
 - CrearBaseDatos: Ejecuta el script SQL para crear tablas.
 - CargarDatosPrueba: Inserta datos mínimos (roles, especialidades,
   medicamentos, horarios, médico de prueba, paciente).
+- Persona: Clase base con idPersona, documentoIdentidad, nombre y apellido.
+- Medico extends Persona: Agrega idMedico, idEspecialidad, registroMedico y
+  nombreEspecialidad (para display en tablas).
+- Paciente extends Persona (nuevo): Agrega idPaciente, historiaClinica.
 - MedicoDAO.insertarMedico(): Transacción que guarda en persona y luego en
-  medico.
+  medico. También cuenta con listarTodos() que hace JOIN a persona y
+  especialidad para obtener datos completos.
+- PacienteDAO (nuevo): Método listarTodos() con JOIN a persona.
 - CitaPresenter: Lógica de negocio para horarios: genera bloques de tiempo a
   partir de intervalo_minutos, filtra ocupados y publica NuevaCitaEvent.
 - ConsultaPresenter: Coordina el flujo completo de consulta: carga citas
   pendientes, registra consulta (transacción), solicita exámenes y receta
   medicamentos con transaccionalidad explícita.
 - CitaDAO: Métodos obtenerCitasPorMedicoYFecha (para filtrar horarios),
-  insertarCita, actualizarEstado, obtenerCitasPorEstado.
+  insertarCita, actualizarEstado, obtenerCitasPorEstado y
+  obtenerCitasPorEstadoConNombres (JOINs con persona para obtener nombres de
+  paciente y médico).
+- Cita: Modelo con campos pacienteNombre y medicoNombre para mostrar nombres
+  en lugar de IDs en la UI de consultas.
 - ConsultaDAO.insertarConsultaYActualizarEstado(): Transacción que inserta
   en consulta y cambia cita.estado a 'ATENDIDA' con commit/rollback.
-- CitasController (JavaFX): Implementa ICitaView con DatePicker, ComboBox y
-  TextField. Se comunica con CitaPresenter.
-- CitasPanel (Swing): Implementación alternativa de ICitaView en Swing.
-- ConsultaController (JavaFX): Controlador standalone con diálogos modales
-  (Dialog) para solicitarExamen y recetarMedicamento, con transacciones
-  manuales commit/rollback.
+- CitasController (JavaFX): Implementa ICitaView con dos TableViews (Pacientes
+  y Médicos) para selección visual, DatePicker y ComboBox de horarios. Carga
+  datos desde PacienteDAO.listarTodos() y MedicoDAO.listarTodos().
+- CitasPanel (Swing): Implementación alternativa de ICitaView en Swing (usa
+  TextFields).
+- ConsultaController (JavaFX): Controlador standalone con ComboBox de citas
+  pendientes que muestra nombres reales de pacientes y médicos, TextArea para
+  síntomas/diagnóstico/tratamiento, y diálogos modales (Dialog) para
+  solicitarExamen y recetarMedicamento.
 - IConsultaView.RecetaRequest: Clase interna anidada para transportar datos
   de receta (idMedicamento, cantidad, dosis) desde la vista al presentador.
 - FacturacionService.generarFactura(): Reúne conceptos pendientes, calcula

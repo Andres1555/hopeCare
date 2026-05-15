@@ -15,7 +15,8 @@ import com.esperanza.hopecare.common.model.Persona;
 public class Medico extends Persona {
     private int idMedico;
     private int idEspecialidad;
-    private String registroMedico;   // TEXT, ej. "RM12345"
+    private String registroMedico;
+    private String nombreEspecialidad;
 
     public Medico() {}
 
@@ -33,4 +34,7 @@ public class Medico extends Persona {
 
     public String getRegistroMedico() { return registroMedico; }
     public void setRegistroMedico(String registroMedico) { this.registroMedico = registroMedico; }
+
+    public String getNombreEspecialidad() { return nombreEspecialidad; }
+    public void setNombreEspecialidad(String nombreEspecialidad) { this.nombreEspecialidad = nombreEspecialidad; }
 }

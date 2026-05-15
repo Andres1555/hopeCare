@@ -27,9 +27,11 @@
 | Ruta | Propósito |
 |------|-----------|
 | `modules/citas_consultas/` | Models, DAOs, Presenters (MVP) para citas y consultas |
+| `modules/pacientes_medicos/` | Models (Persona, Medico, Paciente) y DAOs para pacientes y médicos |
 | `modules/medicamentos_lab/` | Models, DAOs, Services, Facade para farmacia y laboratorio |
 | `modules/facturacion/` | Service, DTOs, DAOs para facturación |
 | `modules/dashboard/` | Observer pattern, DashboardDAO |
+| `common/model/` | Persona (base class con nombre, apellido, documentoIdentidad) |
 | `common/db/` | DatabaseConnection, CrearBaseDatos, CargarDatosPrueba |
 | `common/events/` | EventBus, NuevaCitaEvent, NuevaFacturaEvent |
 | `common/util/` | RoleValidator |
@@ -43,15 +45,15 @@
 ### Citas (MVP - ICitaView + CitaPresenter)
 - **ICP**: `ICitaView.java` - interfaz con mostrarHorariosDisponibles(), getters de selección
 - **Presenter**: `CitaPresenter.java` - genera bloques desde HorarioAtencion (intervalo_minutos), filtra ocupados vía CitaDAO, reserva y publica NuevaCitaEvent
-- **JavaFX**: `CitasController.java` - DatePicker + ComboBox, implementa ICitaView
-- **Swing**: `CitasPanel.java` - implementación alternativa de ICitaView
+- **JavaFX**: `CitasController.java` - dos TableViews (Pacientes y Médicos) con selección por fila + DatePicker + ComboBox. Implementa ICitaView. Carga datos desde `PacienteDAO.listarTodos()` y `MedicoDAO.listarTodos()`
+- **Swing**: `CitasPanel.java` - implementación alternativa de ICitaView (usa TextFields)
 - **Consola**: `CitaConsoleView.java` - implementación de prueba
-- **DAOs**: `CitaDAO.java` (CRUD + filtrar por médico/fecha/estado), `HorarioAtencionDAO.java` (obtener por médico+día)
+- **DAOs**: `CitaDAO.java` (CRUD + filtrar por médico/fecha/estado + `obtenerCitasPorEstadoConNombres()`), `HorarioAtencionDAO.java` (obtener por médico+día), `PacienteDAO.listarTodos()`, `MedicoDAO.listarTodos()` (JOIN con persona y especialidad)
 
 ### Consultas (MVP - IConsultaView + ConsultaPresenter)
 - **ICP**: `IConsultaView.java` - interfaz con métodos para cargar citas, formulario, solicitar examen/receta. Incluye inner class `RecetaRequest`
 - **Presenter**: `ConsultaPresenter.java` - carga citas PROGRAMADA, registra consulta (transacción INSERT consulta + UPDATE cita), solicita examen, receta medicamento (transacción INSERT receta + detalle_receta)
-- **JavaFX**: `ConsultaController.java` - standalone con ComboBox de citas pendientes, TextArea para síntomas/diagnóstico/tratamiento, diálogos modales (Dialog) para seleccionar examen y recetar medicamento con transacciones manuales
+- **JavaFX**: `ConsultaController.java` - standalone con ComboBox de citas pendientes (muestra nombres de paciente/médico gracias a `CitaDAO.obtenerCitasPorEstadoConNombres()`), TextArea para síntomas/diagnóstico/tratamiento, diálogos modales para seleccionar examen y recetar medicamento
 - **DAO**: `ConsultaDAO.java` - insertarConsultaYActualizarEstado() con commit/rollback explícito
 
 ### Farmacia (testeable 100%)
@@ -107,9 +109,22 @@ La navegación se maneja desde `MainController.java`:
 - Pruebas unitarias JUnit 5
 - JAR ejecutable con Maven Assembly Plugin
 
-## Estructura de Archivos Modificados (rediseño UI)
+## Estructura de Archivos Modificados
 - `main.fxml` / `MainController.java` - Nueva navegación header
 - `hopecare.css` - Paleta teal/slate completa
 - `farmacia.fxml` / `FarmaciaController.java` - Completo
 - `laboratorio.fxml` / `LaboratorioController.java` - Completo
 - `dashboard.fxml` - Estilo visual actualizado (lógica existente)
+
+## Últimos Cambios (Selección visual de pacientes/médicos)
+- `Persona.java` - Se agregaron campos `nombre` y `apellido`
+- `Medico.java` - Se agregó campo `nombreEspecialidad` para mostrar especialidad en tablas
+- `MedicoDAO.java` - Nuevo método `listarTodos()` con JOIN a persona y especialidad
+- `Paciente.java` (nuevo) - Modelo con idPaciente, historiaClinica, extiende Persona
+- `PacienteDAO.java` (nuevo) - Método `listarTodos()` con JOIN a persona
+- `Cita.java` - Agregados campos `pacienteNombre` y `medicoNombre` (para display en consultas)
+- `CitaDAO.java` - Nuevo método `obtenerCitasPorEstadoConNombres()` con JOIN a persona
+- `citas.fxml` - TextFields de ID reemplazados por dos TableViews (Pacientes, Médicos)
+- `CitasController.java` - Ahora usa selección por tabla en lugar de IDs manuales
+- `ConsultaController.java` - Muestra nombres de paciente/médico en lugar de solo IDs
+- `module-info.java` - Abierto `common.model` a `javafx.base`
