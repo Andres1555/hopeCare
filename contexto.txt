@@ -304,13 +304,18 @@ LO COMPLETADO:
 - Estructura de paquetes final según módulos (com.esperanza.hopecare).
 - Módulo citas_consultas completo con MVP (ICitaView, IConsultaView,
   CitaPresenter, ConsultaPresenter) y tres implementaciones de vista:
-  JavaFX (CitasController), Swing (CitasPanel) y consola (CitaConsoleView).
+  JavaFX (CitasController con TableViews de pacientes/médicos), Swing
+  (CitasPanel) y consola (CitaConsoleView).
 - Diálogos de "Solicitar examen" y "Recetar medicamento" implementados en
   ConsultaController con transaccionalidad explícita (commit/rollback).
 - Todas las clases DAO, modelos, servicios, fachada y DTOs.
+- Modelos Persona (con nombre/apellido), Medico (con nombreEspecialidad) y
+  Paciente (nuevo). DAOs con listarTodos() que hacen JOIN a persona.
 - Controladores JavaFX y archivos FXML para todos los módulos.
 - EventBus y eventos funcionando (NuevaCitaEvent, NuevaFacturaEvent).
-- Base de datos creada y poblada con datos de prueba.
+- Base de datos se crea y puebla automáticamente al iniciar la app
+  (HopecareApp.init() verifica la BD, ejecuta schema.sql e inserta datos
+  de prueba con 5 pacientes, 3 médicos y 10 citas).
 - La aplicación se lanza desde HopecareApp (mvn javafx:run).
 
 PENDIENTES / PRÓXIMOS PASOS:
@@ -329,9 +334,11 @@ INSTRUCCIONES PARA EJECUTAR EL PROYECTO
 3. Asegurar que el archivo pom.xml tenga las dependencias necesarias.
 4. Ejecutar la clase principal: com.esperanza.hopecare.main.HopecareApp
    o usar comando: mvn javafx:run
-5. Las tablas se crearán automáticamente al ejecutar CrearBaseDatos (opcional,
-   también se pueden crear manualmente con el script).
-6. Datos de prueba: ejecutar CargarDatosPrueba.
+5. La base de datos se inicializa automáticamente al primer inicio:
+   - Si no existen tablas → ejecuta sisgeho_schema.sql
+   - Si la BD está vacía → inserta datos de prueba (5 pacientes, 3 médicos,
+     10 citas, medicamentos, exámenes, horarios)
+   - Para resetear: borrar sisgeho.db de la raíz y reiniciar la app.
 
 ===============================================================================
 CONTACTO Y NOTAS

@@ -75,20 +75,29 @@
 - Driver: SQLite v3.45.1.0 (xerial sqlite-jdbc)
 - **No modificar el schema** (es minimalista, campos sujeto a cambios por otro equipo)
 
+## Inicialización Automática de BD
+La app crea y puebla la base de datos automáticamente al iniciar (`HopecareApp.init()`):
+1. Verifica si la tabla `persona` existe
+2. Si no existe → ejecuta `sisgeho_schema.sql` para crear todas las tablas
+3. Si `persona` está vacía → inserta datos de prueba (5 pacientes, 3 médicos, 10 citas, etc.)
+4. Si ya hay datos → no hace nada
+
+Para resetear la BD: borrar `sisgeho.db` de la raíz y reiniciar la app.
+
 ## Comandos Útiles
 ```bash
 # Configurar entorno (ejecutar una vez por terminal)
-$env:JAVA_HOME = "C:\Program Files\Zulu\zulu-21"
-$env:Path = "$env:USERPROFILE\AppData\Local\apache-maven-3.9.15\bin;$env:Path"
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-25.0.2"
+$mvn = "$env:USERPROFILE\.m2\wrapper\dists\apache-maven-3.9.12-bin\5nmfsn99br87k5d4ajlekdq10k\apache-maven-3.9.12\bin\mvn.cmd"
 
-# Ejecutar app
-mvn clean javafx:run
+# Ejecutar app (inicializa BD automáticamente)
+& $mvn clean javafx:run
 
 # Compilar
-mvn clean compile
+& $mvn clean compile
 ```
 
-**Nota**: Maven está instalado localmente en `%USERPROFILE%\AppData\Local\apache-maven-3.9.15`. Si usas NetBeans/IntelliJ/VS Code con soporte Maven integrado, no necesitas configurar PATH manualmente.
+**Nota**: Maven wrapper en `%USERPROFILE%\.m2\wrapper\dists\apache-maven-3.9.12-bin`. Si usas NetBeans/IntelliJ/VS Code con Maven integrado, no necesitas configurar PATH.
 
 ## Navegación Principal
 La navegación se maneja desde `MainController.java`:
@@ -116,10 +125,10 @@ La navegación se maneja desde `MainController.java`:
 - `laboratorio.fxml` / `LaboratorioController.java` - Completo
 - `dashboard.fxml` - Estilo visual actualizado (lógica existente)
 
-## Últimos Cambios (Selección visual de pacientes/médicos)
+## Últimos Cambios (Selección visual + datos + auto-init BD)
 - `Persona.java` - Se agregaron campos `nombre` y `apellido`
 - `Medico.java` - Se agregó campo `nombreEspecialidad` para mostrar especialidad en tablas
-- `MedicoDAO.java` - Nuevo método `listarTodos()` con JOIN a persona y especialidad
+- `MedicoDAO.java` - Nuevo método `listarTodos()` con JOIN a persona y especialidad (fix: `e.nombre AS nombre_especialidad`)
 - `Paciente.java` (nuevo) - Modelo con idPaciente, historiaClinica, extiende Persona
 - `PacienteDAO.java` (nuevo) - Método `listarTodos()` con JOIN a persona
 - `Cita.java` - Agregados campos `pacienteNombre` y `medicoNombre` (para display en consultas)
@@ -127,4 +136,7 @@ La navegación se maneja desde `MainController.java`:
 - `citas.fxml` - TextFields de ID reemplazados por dos TableViews (Pacientes, Médicos)
 - `CitasController.java` - Ahora usa selección por tabla en lugar de IDs manuales
 - `ConsultaController.java` - Muestra nombres de paciente/médico en lugar de solo IDs
+- `CargarDatosPrueba.java` - Reescrito: 5 pacientes, 3 médicos, 10 citas, datos realistas con nombre/apellido
+- `HopecareApp.java` - Inicialización automática de BD en `init()` (crea schema + pobla datos al primer inicio)
+- `sisgeho_schema.sql` - Agregadas columnas `tipo_persona/nombre/apellido` en persona y `activo` en medico
 - `module-info.java` - Abierto `common.model` a `javafx.base`

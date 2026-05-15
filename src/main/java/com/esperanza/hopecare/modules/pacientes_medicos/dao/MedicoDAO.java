@@ -20,7 +20,7 @@ public class MedicoDAO {
     public List<Medico> listarTodos() {
         List<Medico> lista = new ArrayList<>();
         String sql = "SELECT m.id_medico, m.id_persona, m.id_especialidad, m.registro_medico, "
-                   + "p.nombre, p.apellido, p.documento_identidad, e.nombre_especialidad "
+                   + "p.nombre, p.apellido, p.documento_identidad, e.nombre AS nombre_especialidad "
                    + "FROM medico m "
                    + "JOIN persona p ON m.id_persona = p.id_persona "
                    + "JOIN especialidad e ON m.id_especialidad = e.id_especialidad "

@@ -1,7 +1,10 @@
 -- 1. TABLAS BASE Y TRANSVERSALES
 CREATE TABLE IF NOT EXISTS persona (
     id_persona INTEGER PRIMARY KEY AUTOINCREMENT,
-    documento_identidad TEXT UNIQUE NOT NULL
+    tipo_persona TEXT NOT NULL,
+    nombre TEXT NOT NULL,
+    apellido TEXT NOT NULL,
+    documento_identidad TEXT UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS especialidad (
@@ -27,6 +30,7 @@ CREATE TABLE IF NOT EXISTS medico (
     id_persona INTEGER NOT NULL,
     id_especialidad INTEGER NOT NULL,
     registro_medico TEXT UNIQUE NOT NULL,
+    activo INTEGER DEFAULT 1,
     FOREIGN KEY (id_persona) REFERENCES persona(id_persona),
     FOREIGN KEY (id_especialidad) REFERENCES especialidad(id_especialidad)
 );
