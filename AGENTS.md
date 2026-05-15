@@ -26,16 +26,33 @@
 ## Paquetes Clave
 | Ruta | Propósito |
 |------|-----------|
+| `modules/citas_consultas/` | Models, DAOs, Presenters (MVP) para citas y consultas |
 | `modules/medicamentos_lab/` | Models, DAOs, Services, Facade para farmacia y laboratorio |
-| `modules/citas_consultas/` | Models, DAOs, Presenters para citas y consultas |
-| `modules/facturacion/` | Service, DTOs, DAOs para facturación (parcial) |
+| `modules/facturacion/` | Service, DTOs, DAOs para facturación |
 | `modules/dashboard/` | Observer pattern, DashboardDAO |
 | `common/db/` | DatabaseConnection, CrearBaseDatos, CargarDatosPrueba |
 | `common/events/` | EventBus, NuevaCitaEvent, NuevaFacturaEvent |
-| `common/utils/` | RoleValidator, CalculadoraImpuestos |
+| `common/util/` | RoleValidator |
+| `citas/view/` | CitasController.java (JavaFX, implementa ICitaView) + citas.fxml |
+| `consulta/view/` | ConsultaController.java (standalone) + consulta.fxml |
+| `ui/citas/` | CitasPanel.java (Swing, implementa ICitaView) |
 | `*/view/` | Java Controllers + FXML files |
 
-## Módulos Completos (Farmacia + Laboratorio)
+## Módulos Completos (Citas/Consultas + Farmacia + Laboratorio)
+
+### Citas (MVP - ICitaView + CitaPresenter)
+- **ICP**: `ICitaView.java` - interfaz con mostrarHorariosDisponibles(), getters de selección
+- **Presenter**: `CitaPresenter.java` - genera bloques desde HorarioAtencion (intervalo_minutos), filtra ocupados vía CitaDAO, reserva y publica NuevaCitaEvent
+- **JavaFX**: `CitasController.java` - DatePicker + ComboBox, implementa ICitaView
+- **Swing**: `CitasPanel.java` - implementación alternativa de ICitaView
+- **Consola**: `CitaConsoleView.java` - implementación de prueba
+- **DAOs**: `CitaDAO.java` (CRUD + filtrar por médico/fecha/estado), `HorarioAtencionDAO.java` (obtener por médico+día)
+
+### Consultas (MVP - IConsultaView + ConsultaPresenter)
+- **ICP**: `IConsultaView.java` - interfaz con métodos para cargar citas, formulario, solicitar examen/receta. Incluye inner class `RecetaRequest`
+- **Presenter**: `ConsultaPresenter.java` - carga citas PROGRAMADA, registra consulta (transacción INSERT consulta + UPDATE cita), solicita examen, receta medicamento (transacción INSERT receta + detalle_receta)
+- **JavaFX**: `ConsultaController.java` - standalone con ComboBox de citas pendientes, TextArea para síntomas/diagnóstico/tratamiento, diálogos modales (Dialog) para seleccionar examen y recetar medicamento con transacciones manuales
+- **DAO**: `ConsultaDAO.java` - insertarConsultaYActualizarEstado() con commit/rollback explícito
 
 ### Farmacia (testeable 100%)
 - **FXML**: `farmacia.fxml` - 3 cards (Inventario, Recetas Activas, Entregas Recientes) + form de entrega
@@ -84,12 +101,11 @@ La navegación se maneja desde `MainController.java`:
 - Al agregar nuevos modelos usados en TableView con PropertyValueFactory, agregar `opens` correspondiente en `module-info.java`
 
 ## Pendientes Conocidos
-- Login con roles (responsabilidad de otro equipo)
-- Módulos de otros equipos (Dashboard, Citas, Consulta, Registro, Facturación): tienen estructura visual pero lógica pendiente
+- Login con roles (actualmente se pasa rol fijo)
+- Módulos de otros equipos (Dashboard, Registro, Facturación): tienen estructura visual pero lógica o DAOs pendientes
 - Reportes (JasperReports)
 - Pruebas unitarias JUnit 5
 - JAR ejecutable con Maven Assembly Plugin
-- DAOs de facturación (facturacion/dao/) son stubs sin implementación real
 
 ## Estructura de Archivos Modificados (rediseño UI)
 - `main.fxml` / `MainController.java` - Nueva navegación header
