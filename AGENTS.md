@@ -125,7 +125,7 @@ La navegación se maneja desde `MainController.java`:
 - `laboratorio.fxml` / `LaboratorioController.java` - Completo
 - `dashboard.fxml` - Estilo visual actualizado (lógica existente)
 
-## Últimos Cambios (Rediseño flujo citas: tabla principal + diálogo modal + filtros)
+## Últimos Cambios (Rediseño flujo citas: tabla principal + diálogo modal + filtros + fix selección)
 - `Especialidad.java` (nuevo) - Modelo para la tabla especialidad (idEspecialidad, nombre)
 - `EspecialidadDAO.java` (nuevo) - DAO con `listarTodas()` para cargar especialidades en ComboBox
 - `HorarioAtencionDAO.java` - Nuevo método `obtenerHorariosPorMedico(int)` que retorna todos los horarios de un médico (todos los días)
@@ -138,3 +138,4 @@ La navegación se maneja desde `MainController.java`:
 - `CitasPanel.java` (Swing) - Implementados stubs de `mostrarCitasExistentes`, `mostrarDiasDisponibles` y `getDiaSeleccionado`
 - `ConsultaPresenter.java` - Cambiado a `obtenerCitasPorEstadoConNombres()` para mostrar nombres paciente/médico en ComboBox
 - `ConsultaController.java` - Ahora implementa `IConsultaView` y delega toda la lógica de negocio a `ConsultaPresenter` (MVP completo)
+- `CitasController.java` - Fix: eliminado `Platform.runLater` en la `ICitaView` temporal del diálogo (race condition cerraba el diálogo antes de la alerta). `dialog.close()` movido a `mostrarMensajeExito` (solo se cierra en éxito). Filtros de pacientes/médicos cambiados a `FilteredList` con `setPredicate()` para preservar selección del usuario

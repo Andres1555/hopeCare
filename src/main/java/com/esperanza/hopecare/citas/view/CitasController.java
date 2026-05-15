@@ -13,6 +13,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -73,11 +74,11 @@ public class CitasController implements ICitaView {
 
         ObservableList<Paciente> pacientesList = FXCollections.observableArrayList(pacienteDAO.listarTodos());
         ObservableList<Medico> medicosList = FXCollections.observableArrayList(medicoDAO.listarTodos());
-        ObservableList<Medico> medicosFiltrados = FXCollections.observableArrayList(medicosList);
 
         TextField txtBuscarPac = new TextField();
         txtBuscarPac.setPromptText("Buscar paciente por nombre...");
 
+        FilteredList<Paciente> pacientesFiltrados = new FilteredList<>(pacientesList, p -> true);
         TableView<Paciente> tvPacientes = new TableView<>();
         tvPacientes.setPrefHeight(150);
         tvPacientes.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -89,7 +90,7 @@ public class CitasController implements ICitaView {
         TableColumn<Paciente, String> colPacDoc = new TableColumn<>("Documento");
         colPacDoc.setCellValueFactory(new PropertyValueFactory<>("documentoIdentidad"));
         tvPacientes.getColumns().addAll(colPacId, colPacNombre, colPacDoc);
-        tvPacientes.setItems(pacientesList);
+        tvPacientes.setItems(pacientesFiltrados);
 
         ComboBox<Especialidad> cbEsp = new ComboBox<>();
         cbEsp.setPrefWidth(200);
@@ -102,6 +103,7 @@ public class CitasController implements ICitaView {
         TextField txtBuscarMed = new TextField();
         txtBuscarMed.setPromptText("Buscar médico por nombre...");
 
+        FilteredList<Medico> medicosFiltrados = new FilteredList<>(medicosList, m -> true);
         TableView<Medico> tvMedicos = new TableView<>();
         tvMedicos.setPrefHeight(150);
         tvMedicos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -134,32 +136,22 @@ public class CitasController implements ICitaView {
 
         txtBuscarPac.textProperty().addListener((obs, old, val) -> {
             String texto = val.toLowerCase().trim();
-            pacientesList.forEach(p -> {
-                String nombreCompleto = (p.getNombre() + " " + p.getApellido()).toLowerCase();
-                tvPacientes.getItems().filtered(pac -> {
-                    String nc = (pac.getNombre() + " " + pac.getApellido()).toLowerCase();
-                    return texto.isEmpty() || nc.contains(texto);
-                });
-            });
-            tvPacientes.setItems(pacientesList.filtered(p -> {
+            pacientesFiltrados.setPredicate(p -> {
                 String nc = (p.getNombre() + " " + p.getApellido()).toLowerCase();
                 return texto.isEmpty() || nc.contains(texto);
-            }));
+            });
         });
 
         Runnable filtrarMedicos = () -> {
             String texto = txtBuscarMed.getText().toLowerCase().trim();
             Especialidad esp = cbEsp.getValue();
-            medicosFiltrados.clear();
-            for (Medico m : medicosList) {
+            medicosFiltrados.setPredicate(m -> {
                 boolean coincideNombre = texto.isEmpty() ||
                     (m.getNombre() + " " + m.getApellido()).toLowerCase().contains(texto);
                 boolean coincideEsp = esp == null || esp.getIdEspecialidad() == 0 ||
                     m.getIdEspecialidad() == esp.getIdEspecialidad();
-                if (coincideNombre && coincideEsp) {
-                    medicosFiltrados.add(m);
-                }
-            }
+                return coincideNombre && coincideEsp;
+            });
         };
 
         cbEsp.setOnAction(e -> filtrarMedicos.run());

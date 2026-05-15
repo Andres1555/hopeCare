@@ -334,6 +334,10 @@ LO COMPLETADO:
 - ConsultaController ahora implementa IConsultaView con MVP completo
   (delega en ConsultaPresenter), con diálogos modales que devuelven
   Integer (examen) y RecetaRequest (receta).
+- Fix en CitasController: eliminado Platform.runLater de la ICitaView
+  temporal del diálogo (causaba race condition). dialog.close() solo
+  se llama en éxito. Filtros de tablas cambiados a FilteredList con
+  setPredicate() para preservar selección del usuario al escribir.
 
 PENDIENTES / PRÓXIMOS PASOS:
 - Integrar completamente el login con roles (actualmente se pasa rol fijo
