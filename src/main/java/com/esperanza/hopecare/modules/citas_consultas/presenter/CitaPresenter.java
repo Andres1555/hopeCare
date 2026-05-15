@@ -24,6 +24,11 @@ public class CitaPresenter {
         this.citaDAO = new CitaDAO();
     }
 
+    public void cargarCitasExistentes() {
+        List<Cita> citas = citaDAO.listarTodasConNombres();
+        view.mostrarCitasExistentes(citas);
+    }
+
     public void cargarDiasDisponibles(int idMedico) {
         List<HorarioAtencion> horarios = horarioDAO.obtenerHorariosPorMedico(idMedico);
         List<Integer> diasSemana = new ArrayList<>();

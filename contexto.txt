@@ -230,20 +230,22 @@ Principales tablas (script completo en sisgeho_schema.sql):
   pendientes, registra consulta (transacción), solicita exámenes y receta
   medicamentos con transaccionalidad explícita.
 - CitaDAO: Métodos obtenerCitasPorMedicoYFecha (para filtrar horarios),
-  insertarCita, actualizarEstado, obtenerCitasPorEstado y
+  insertarCita, actualizarEstado, obtenerCitasPorEstado,
+  listarTodasConNombres (todas las citas ORDER BY fecha DESC con JOINs) y
   obtenerCitasPorEstadoConNombres (JOINs con persona para obtener nombres de
   paciente y médico).
 - Cita: Modelo con campos pacienteNombre y medicoNombre para mostrar nombres
   en lugar de IDs en la UI de consultas.
 - ConsultaDAO.insertarConsultaYActualizarEstado(): Transacción que inserta
   en consulta y cambia cita.estado a 'ATENDIDA' con commit/rollback.
-- CitasController (JavaFX): Implementa ICitaView con dos TableViews (Pacientes
-  y Médicos) apiladas verticalmente. Incluye ComboBox de especialidad y TextField
-  de búsqueda por nombre para filtrar médicos. Al seleccionar médico, carga los
-  días disponibles desde HorarioAtencionDAO.obtenerHorariosPorMedico() y los
-  muestra en un ComboBox. Al seleccionar día, asigna automáticamente la fecha
-  (próxima ocurrencia de ese día). DatePicker y ComboBox de horarios completan
-  el formulario de reserva.
+- CitasController (JavaFX): Implementa ICitaView con tabla de citas existentes
+  (ID, Paciente, Médico, Fecha/Hora, Estado) como vista principal. "Nueva Cita"
+  abre un diálogo modal con MVP inline (ICitaView temporal + CitaPresenter). El
+  diálogo contiene: buscador de pacientes con tabla filtrada, filtro de
+  especialidad + buscador de médicos con tabla filtrada, selector de días
+  disponibles (desde HorarioAtencionDAO.obtenerHorariosPorMedico()), auto-
+  asignación de fecha a la próxima ocurrencia del día, selector de horarios y
+  botón reservar. Al cerrar, refresca la tabla de citas.
 - CitasPanel (Swing): Implementación alternativa de ICitaView en Swing (usa
   TextFields).
 - ConsultaController (JavaFX): Implementa IConsultaView y delega toda la lógica
@@ -323,9 +325,12 @@ LO COMPLETADO:
   (HopecareApp.init() verifica la BD, ejecuta schema.sql e inserta datos
   de prueba con 5 pacientes, 3 médicos y 10 citas).
 - La aplicación se lanza desde HopecareApp (mvn javafx:run).
-- Flujo de citas mejorado: búsqueda de médicos por nombre, filtro por
-  especialidad (ComboBox), layout siempre vertical, selección de días
-  disponibles del médico con auto-asignación de fecha próxima.
+- Flujo de citas rediseñado: vista principal con tabla de citas existentes
+  (todas, ORDER BY fecha DESC), botón "Agendar nueva cita" abre diálogo modal
+  con MVP inline. El diálogo incluye buscador de pacientes, filtro de
+  especialidad + buscador de médicos, selector de días disponibles, auto-
+  asignación de fecha y horarios. Al reservar, publica NuevaCitaEvent y
+  refresca la tabla principal.
 - ConsultaController ahora implementa IConsultaView con MVP completo
   (delega en ConsultaPresenter), con diálogos modales que devuelven
   Integer (examen) y RecetaRequest (receta).

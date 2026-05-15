@@ -1,5 +1,6 @@
 package com.esperanza.hopecare.citas.view;
 
+import com.esperanza.hopecare.modules.citas_consultas.model.Cita;
 import com.esperanza.hopecare.modules.citas_consultas.presenter.CitaPresenter;
 import com.esperanza.hopecare.modules.citas_consultas.view.ICitaView;
 import com.esperanza.hopecare.modules.pacientes_medicos.dao.EspecialidadDAO;
@@ -15,33 +16,21 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class CitasController implements ICitaView {
-    @FXML private VBox root;
-    @FXML private VBox panelPacientes;
-    @FXML private VBox panelMedicos;
-    @FXML private TableView<Paciente> tvPacientes;
-    @FXML private TableView<Medico> tvMedicos;
-    @FXML private ComboBox<Especialidad> cbEspecialidad;
-    @FXML private TextField txtBuscarMedico;
-    @FXML private ComboBox<String> cbDias;
-    @FXML private DatePicker dpFecha;
-    @FXML private ComboBox<String> cbHorarios;
-    @FXML private Button btnBuscar;
-    @FXML private Button btnReservar;
+    @FXML private TableView<Cita> tvCitas;
+    @FXML private Button btnNuevaCita;
 
     private CitaPresenter presenter;
-    private List<LocalTime> horariosActuales;
-    private int idPacienteSeleccionado = -1;
-    private int idMedicoSeleccionado = -1;
-    private ObservableList<Paciente> pacientesList;
-    private ObservableList<Medico> medicosList;
-    private ObservableList<Medico> medicosFiltrados;
+    private ObservableList<Cita> citasList;
 
     private static final String[] NOMBRES_DIAS = {"", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
 
@@ -49,177 +38,294 @@ public class CitasController implements ICitaView {
     public void initialize() {
         presenter = new CitaPresenter(this);
 
-        configurarTablaPacientes();
-        configurarTablaMedicos();
-        configurarFiltros();
-        configurarDias();
+        configurarTablaCitas();
+        btnNuevaCita.setOnAction(e -> abrirDialogoNuevaCita());
 
-        btnBuscar.setOnAction(e -> buscarHorarios());
-        btnReservar.setOnAction(e -> presenter.reservarCita());
+        presenter.cargarCitasExistentes();
+    }
+
+    private void configurarTablaCitas() {
+        TableColumn<Cita, Number> colId = (TableColumn<Cita, Number>) tvCitas.getColumns().get(0);
+        TableColumn<Cita, String> colPac = (TableColumn<Cita, String>) tvCitas.getColumns().get(1);
+        TableColumn<Cita, String> colMed = (TableColumn<Cita, String>) tvCitas.getColumns().get(2);
+        TableColumn<Cita, String> colFecha = (TableColumn<Cita, String>) tvCitas.getColumns().get(3);
+        TableColumn<Cita, String> colEstado = (TableColumn<Cita, String>) tvCitas.getColumns().get(4);
+
+        colId.setCellValueFactory(new PropertyValueFactory<>("idCita"));
+        colPac.setCellValueFactory(new PropertyValueFactory<>("pacienteNombre"));
+        colMed.setCellValueFactory(new PropertyValueFactory<>("medicoNombre"));
+        colFecha.setCellValueFactory(cd -> new SimpleStringProperty(
+            cd.getValue().getFechaHora().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
+        colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
+
+        citasList = FXCollections.observableArrayList();
+        tvCitas.setItems(citasList);
+    }
+
+    private void abrirDialogoNuevaCita() {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Nueva Cita Médica");
+        dialog.setHeaderText("Complete los datos para agendar una nueva cita");
+
+        PacienteDAO pacienteDAO = new PacienteDAO();
+        MedicoDAO medicoDAO = new MedicoDAO();
+        EspecialidadDAO espDAO = new EspecialidadDAO();
+
+        ObservableList<Paciente> pacientesList = FXCollections.observableArrayList(pacienteDAO.listarTodos());
+        ObservableList<Medico> medicosList = FXCollections.observableArrayList(medicoDAO.listarTodos());
+        ObservableList<Medico> medicosFiltrados = FXCollections.observableArrayList(medicosList);
+
+        TextField txtBuscarPac = new TextField();
+        txtBuscarPac.setPromptText("Buscar paciente por nombre...");
+
+        TableView<Paciente> tvPacientes = new TableView<>();
+        tvPacientes.setPrefHeight(150);
+        tvPacientes.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        TableColumn<Paciente, Number> colPacId = new TableColumn<>("ID");
+        colPacId.setCellValueFactory(new PropertyValueFactory<>("idPaciente"));
+        TableColumn<Paciente, String> colPacNombre = new TableColumn<>("Nombre");
+        colPacNombre.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getNombre() + " " + cd.getValue().getApellido()));
+        TableColumn<Paciente, String> colPacDoc = new TableColumn<>("Documento");
+        colPacDoc.setCellValueFactory(new PropertyValueFactory<>("documentoIdentidad"));
+        tvPacientes.getColumns().addAll(colPacId, colPacNombre, colPacDoc);
+        tvPacientes.setItems(pacientesList);
+
+        ComboBox<Especialidad> cbEsp = new ComboBox<>();
+        cbEsp.setPrefWidth(200);
+        List<Especialidad> especialidades = espDAO.listarTodas();
+        Especialidad todas = new Especialidad(0, "Todas");
+        cbEsp.getItems().add(todas);
+        cbEsp.getItems().addAll(especialidades);
+        cbEsp.setValue(todas);
+
+        TextField txtBuscarMed = new TextField();
+        txtBuscarMed.setPromptText("Buscar médico por nombre...");
+
+        TableView<Medico> tvMedicos = new TableView<>();
+        tvMedicos.setPrefHeight(150);
+        tvMedicos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        TableColumn<Medico, Number> colMedId = new TableColumn<>("ID");
+        colMedId.setCellValueFactory(new PropertyValueFactory<>("idMedico"));
+        TableColumn<Medico, String> colMedNombre = new TableColumn<>("Nombre");
+        colMedNombre.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getNombre() + " " + cd.getValue().getApellido()));
+        TableColumn<Medico, String> colMedEsp = new TableColumn<>("Especialidad");
+        colMedEsp.setCellValueFactory(new PropertyValueFactory<>("nombreEspecialidad"));
+        TableColumn<Medico, String> colMedReg = new TableColumn<>("Registro");
+        colMedReg.setCellValueFactory(new PropertyValueFactory<>("registroMedico"));
+        tvMedicos.getColumns().addAll(colMedId, colMedNombre, colMedEsp, colMedReg);
+        tvMedicos.setItems(medicosFiltrados);
+
+        ComboBox<String> cbDias = new ComboBox<>();
+        cbDias.setPrefWidth(200);
+        cbDias.setDisable(true);
+        cbDias.setPromptText("Seleccione un médico");
+
+        DatePicker dpFecha = new DatePicker();
+
+        ComboBox<String> cbHorarios = new ComboBox<>();
+        cbHorarios.setPrefWidth(200);
         cbHorarios.setDisable(true);
+
+        Button btnBuscar = new Button("Buscar horarios");
+        Button btnReservar = new Button("Reservar cita");
         btnReservar.setDisable(true);
 
-        cargarDatos();
-    }
+        txtBuscarPac.textProperty().addListener((obs, old, val) -> {
+            String texto = val.toLowerCase().trim();
+            pacientesList.forEach(p -> {
+                String nombreCompleto = (p.getNombre() + " " + p.getApellido()).toLowerCase();
+                tvPacientes.getItems().filtered(pac -> {
+                    String nc = (pac.getNombre() + " " + pac.getApellido()).toLowerCase();
+                    return texto.isEmpty() || nc.contains(texto);
+                });
+            });
+            tvPacientes.setItems(pacientesList.filtered(p -> {
+                String nc = (p.getNombre() + " " + p.getApellido()).toLowerCase();
+                return texto.isEmpty() || nc.contains(texto);
+            }));
+        });
 
-    private void configurarTablaPacientes() {
-        TableColumn<Paciente, Number> colPacId = (TableColumn<Paciente, Number>) tvPacientes.getColumns().get(0);
-        TableColumn<Paciente, String> colPacNombre = (TableColumn<Paciente, String>) tvPacientes.getColumns().get(1);
-        TableColumn<Paciente, String> colPacDoc = (TableColumn<Paciente, String>) tvPacientes.getColumns().get(2);
+        Runnable filtrarMedicos = () -> {
+            String texto = txtBuscarMed.getText().toLowerCase().trim();
+            Especialidad esp = cbEsp.getValue();
+            medicosFiltrados.clear();
+            for (Medico m : medicosList) {
+                boolean coincideNombre = texto.isEmpty() ||
+                    (m.getNombre() + " " + m.getApellido()).toLowerCase().contains(texto);
+                boolean coincideEsp = esp == null || esp.getIdEspecialidad() == 0 ||
+                    m.getIdEspecialidad() == esp.getIdEspecialidad();
+                if (coincideNombre && coincideEsp) {
+                    medicosFiltrados.add(m);
+                }
+            }
+        };
 
-        colPacId.setCellValueFactory(new PropertyValueFactory<>("idPaciente"));
-        colPacNombre.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getNombre() + " " + cd.getValue().getApellido()));
-        colPacDoc.setCellValueFactory(new PropertyValueFactory<>("documentoIdentidad"));
+        cbEsp.setOnAction(e -> filtrarMedicos.run());
+        txtBuscarMed.textProperty().addListener((obs, old, val) -> filtrarMedicos.run());
+
+        final int[] idPacSeleccionado = {-1};
+        final int[] idMedSeleccionado = {-1};
 
         tvPacientes.getSelectionModel().selectedItemProperty().addListener((obs, old, sel) -> {
-            idPacienteSeleccionado = (sel != null) ? sel.getIdPaciente() : -1;
+            idPacSeleccionado[0] = sel != null ? sel.getIdPaciente() : -1;
         });
-    }
 
-    private void configurarTablaMedicos() {
-        TableColumn<Medico, Number> colMedId = (TableColumn<Medico, Number>) tvMedicos.getColumns().get(0);
-        TableColumn<Medico, String> colMedNombre = (TableColumn<Medico, String>) tvMedicos.getColumns().get(1);
-        TableColumn<Medico, String> colMedEsp = (TableColumn<Medico, String>) tvMedicos.getColumns().get(2);
-        TableColumn<Medico, String> colMedReg = (TableColumn<Medico, String>) tvMedicos.getColumns().get(3);
-
-        colMedId.setCellValueFactory(new PropertyValueFactory<>("idMedico"));
-        colMedNombre.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getNombre() + " " + cd.getValue().getApellido()));
-        colMedEsp.setCellValueFactory(new PropertyValueFactory<>("nombreEspecialidad"));
-        colMedReg.setCellValueFactory(new PropertyValueFactory<>("registroMedico"));
-
-        tvMedicos.getSelectionModel().selectedItemProperty().addListener((obs, old, sel) -> {
-            idMedicoSeleccionado = (sel != null) ? sel.getIdMedico() : -1;
-            if (sel != null) {
-                presenter.cargarDiasDisponibles(sel.getIdMedico());
-            } else {
+        CitaPresenter dialogPresenter = new CitaPresenter(new ICitaView() {
+            @Override public void mostrarCitasExistentes(List<Cita> citas) {}
+            @Override public void mostrarHorariosDisponibles(List<LocalTime> bloques) {
                 Platform.runLater(() -> {
-                    cbDias.getItems().clear();
-                    cbDias.setDisable(true);
-                    cbDias.setPromptText("Seleccione un médico primero");
+                    cbHorarios.getItems().clear();
+                    if (bloques.isEmpty()) {
+                        cbHorarios.setDisable(true);
+                        btnReservar.setDisable(true);
+                        cbHorarios.getItems().add("No hay horarios disponibles");
+                    } else {
+                        for (LocalTime t : bloques) cbHorarios.getItems().add(t.toString());
+                        cbHorarios.setDisable(false);
+                        btnReservar.setDisable(false);
+                    }
                 });
             }
+            @Override public void mostrarDiasDisponibles(List<Integer> diasSemana) {
+                Platform.runLater(() -> {
+                    cbDias.getItems().clear();
+                    if (diasSemana.isEmpty()) {
+                        cbDias.setDisable(true);
+                        cbDias.setPromptText("Sin días disponibles");
+                        return;
+                    }
+                    for (int d : diasSemana) cbDias.getItems().add(d + " - " + NOMBRES_DIAS[d]);
+                    cbDias.setDisable(false);
+                    cbDias.setPromptText("Seleccione un día");
+                });
+            }
+            @Override public int getDiaSeleccionado() { return 0; }
+            @Override public void mostrarMensajeError(String mensaje) {
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, mensaje);
+                    alert.showAndWait();
+                });
+            }
+            @Override public void mostrarMensajeExito(String mensaje) {
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, mensaje);
+                    alert.showAndWait();
+                });
+            }
+            @Override public void limpiarCampos() {}
+            @Override public int getIdPacienteSeleccionado() { return idPacSeleccionado[0]; }
+            @Override public int getIdMedicoSeleccionado() { return idMedSeleccionado[0]; }
+            @Override public LocalDate getFechaSeleccionada() { return dpFecha.getValue(); }
+            @Override public LocalTime getHoraSeleccionada() {
+                String s = cbHorarios.getValue();
+                return s != null ? LocalTime.parse(s) : null;
+            }
         });
-    }
 
-    private void configurarFiltros() {
-        EspecialidadDAO espDAO = new EspecialidadDAO();
-        List<Especialidad> especialidades = espDAO.listarTodas();
-        Especialidad todas = new Especialidad(0, "Todas las especialidades");
-        cbEspecialidad.getItems().add(todas);
-        cbEspecialidad.getItems().addAll(especialidades);
-        cbEspecialidad.setValue(todas);
-
-        cbEspecialidad.setOnAction(e -> filtrarMedicos());
-        txtBuscarMedico.textProperty().addListener((obs, old, val) -> filtrarMedicos());
-    }
-
-    private void configurarDias() {
-        cbDias.setDisable(true);
+        tvMedicos.getSelectionModel().selectedItemProperty().addListener((obs, old, sel) -> {
+            idMedSeleccionado[0] = sel != null ? sel.getIdMedico() : -1;
+            if (sel != null) {
+                dialogPresenter.cargarDiasDisponibles(sel.getIdMedico());
+            } else {
+                cbDias.getItems().clear();
+                cbDias.setDisable(true);
+                cbDias.setPromptText("Seleccione un médico");
+            }
+        });
 
         cbDias.setOnAction(e -> {
             String val = cbDias.getValue();
-            if (val == null || cbDias.getItems().isEmpty()) return;
-
+            if (val == null) return;
             int diaSemana = Integer.parseInt(val.split(" - ")[0]);
             LocalDate today = LocalDate.now();
             LocalDate nextDate = today.with(DayOfWeek.of(diaSemana));
-            if (!nextDate.isAfter(today)) {
-                nextDate = nextDate.plusWeeks(1);
-            }
+            if (!nextDate.isAfter(today)) nextDate = nextDate.plusWeeks(1);
             dpFecha.setValue(nextDate);
         });
-    }
 
-    private void filtrarMedicos() {
-        String texto = txtBuscarMedico.getText().toLowerCase().trim();
-        Especialidad esp = cbEspecialidad.getValue();
-
-        medicosFiltrados.clear();
-        for (Medico m : medicosList) {
-            boolean coincideNombre = texto.isEmpty() ||
-                (m.getNombre() + " " + m.getApellido()).toLowerCase().contains(texto);
-            boolean coincideEsp = esp == null || esp.getIdEspecialidad() == 0 ||
-                m.getIdEspecialidad() == esp.getIdEspecialidad();
-
-            if (coincideNombre && coincideEsp) {
-                medicosFiltrados.add(m);
-            }
-        }
-        tvMedicos.setItems(medicosFiltrados);
-    }
-
-    private void cargarDatos() {
-        MedicoDAO medicoDAO = new MedicoDAO();
-        PacienteDAO pacienteDAO = new PacienteDAO();
-        pacientesList = FXCollections.observableArrayList(pacienteDAO.listarTodos());
-        medicosList = FXCollections.observableArrayList(medicoDAO.listarTodos());
-        medicosFiltrados = FXCollections.observableArrayList(medicosList);
-        tvPacientes.setItems(pacientesList);
-        tvMedicos.setItems(medicosFiltrados);
-    }
-
-    private void buscarHorarios() {
-        if (idMedicoSeleccionado <= 0) {
-            mostrarMensajeError("Seleccione un médico de la tabla");
-            return;
-        }
-        LocalDate fecha = dpFecha.getValue();
-        if (fecha == null) {
-            mostrarMensajeError("Seleccione una fecha");
-            return;
-        }
-        presenter.actualizarHorariosDisponibles(idMedicoSeleccionado, fecha);
-    }
-
-    @Override
-    public void mostrarDiasDisponibles(List<Integer> diasSemana) {
-        Platform.runLater(() -> {
-            cbDias.getItems().clear();
-            if (diasSemana.isEmpty()) {
-                cbDias.setDisable(true);
-                cbDias.setPromptText("Sin días disponibles");
+        btnBuscar.setOnAction(e -> {
+            if (idMedSeleccionado[0] <= 0) {
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Seleccione un médico");
+                alert.showAndWait();
                 return;
             }
-            for (int d : diasSemana) {
-                cbDias.getItems().add(d + " - " + NOMBRES_DIAS[d]);
+            if (dpFecha.getValue() == null) {
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Seleccione una fecha");
+                alert.showAndWait();
+                return;
             }
-            cbDias.setDisable(false);
-            cbDias.setPromptText("Seleccione un día");
+            dialogPresenter.actualizarHorariosDisponibles(idMedSeleccionado[0], dpFecha.getValue());
         });
+
+        final boolean[] reservaExitosa = {false};
+        btnReservar.setOnAction(e -> {
+            dialogPresenter.reservarCita();
+            reservaExitosa[0] = true;
+            dialog.close();
+        });
+
+        VBox pacienteSection = new VBox(5,
+            new Label("Seleccionar paciente:"),
+            txtBuscarPac,
+            tvPacientes
+        );
+
+        HBox filtrosMedicos = new HBox(10, cbEsp, txtBuscarMed);
+        HBox.setHgrow(txtBuscarMed, javafx.scene.layout.Priority.ALWAYS);
+        VBox medicoSection = new VBox(5,
+            new Label("Seleccionar médico:"),
+            filtrosMedicos,
+            tvMedicos
+        );
+
+        HBox tablesRow = new HBox(20, pacienteSection, medicoSection);
+        HBox.setHgrow(pacienteSection, javafx.scene.layout.Priority.ALWAYS);
+        HBox.setHgrow(medicoSection, javafx.scene.layout.Priority.ALWAYS);
+
+        GridPane horarioGrid = new GridPane();
+        horarioGrid.setHgap(10);
+        horarioGrid.setVgap(10);
+        horarioGrid.add(new Label("Día disponible:"), 0, 0);
+        horarioGrid.add(cbDias, 1, 0);
+        horarioGrid.add(new Label("Fecha:"), 2, 0);
+        horarioGrid.add(dpFecha, 3, 0);
+        horarioGrid.add(btnBuscar, 0, 1, 4, 1);
+        horarioGrid.add(new Label("Horario:"), 0, 2);
+        horarioGrid.add(cbHorarios, 1, 2);
+        horarioGrid.add(btnReservar, 2, 2, 2, 1);
+
+        VBox content = new VBox(15, tablesRow, horarioGrid);
+        content.setStyle("-fx-padding: 15;");
+
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().setPrefWidth(750);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
+
+        dialog.showAndWait();
+
+        presenter.cargarCitasExistentes();
     }
 
     @Override
-    public int getDiaSeleccionado() {
-        if (cbDias.getValue() == null) return -1;
-        return Integer.parseInt(cbDias.getValue().split(" - ")[0]);
+    public void mostrarCitasExistentes(List<Cita> citas) {
+        Platform.runLater(() -> citasList.setAll(citas));
     }
 
     @Override
-    public void mostrarHorariosDisponibles(List<LocalTime> bloques) {
-        Platform.runLater(() -> {
-            cbHorarios.getItems().clear();
-            if (bloques.isEmpty()) {
-                cbHorarios.setDisable(true);
-                btnReservar.setDisable(true);
-                cbHorarios.getItems().add("No hay horarios disponibles");
-            } else {
-                horariosActuales = bloques;
-                for (LocalTime t : bloques) {
-                    cbHorarios.getItems().add(t.toString());
-                }
-                cbHorarios.setDisable(false);
-                btnReservar.setDisable(false);
-            }
-        });
-    }
+    public void mostrarHorariosDisponibles(List<LocalTime> bloques) {}
+
+    @Override
+    public void mostrarDiasDisponibles(List<Integer> diasSemana) {}
+
+    @Override
+    public int getDiaSeleccionado() { return -1; }
 
     @Override
     public void mostrarMensajeError(String mensaje) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setHeaderText(null);
-            alert.setContentText(mensaje);
+            Alert alert = new Alert(Alert.AlertType.ERROR, mensaje);
             alert.showAndWait();
         });
     }
@@ -227,50 +333,23 @@ public class CitasController implements ICitaView {
     @Override
     public void mostrarMensajeExito(String mensaje) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Éxito");
-            alert.setHeaderText(null);
-            alert.setContentText(mensaje);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, mensaje);
             alert.showAndWait();
-            limpiarCampos();
         });
     }
 
     @Override
-    public void limpiarCampos() {
-        Platform.runLater(() -> {
-            tvPacientes.getSelectionModel().clearSelection();
-            tvMedicos.getSelectionModel().clearSelection();
-            cbDias.getItems().clear();
-            cbDias.setDisable(true);
-            cbDias.setPromptText("Seleccione un médico primero");
-            dpFecha.setValue(null);
-            cbHorarios.getItems().clear();
-            cbHorarios.setDisable(true);
-            btnReservar.setDisable(true);
-            idPacienteSeleccionado = -1;
-            idMedicoSeleccionado = -1;
-        });
-    }
+    public void limpiarCampos() {}
 
     @Override
-    public int getIdPacienteSeleccionado() {
-        return idPacienteSeleccionado;
-    }
+    public int getIdPacienteSeleccionado() { return -1; }
 
     @Override
-    public int getIdMedicoSeleccionado() {
-        return idMedicoSeleccionado;
-    }
+    public int getIdMedicoSeleccionado() { return -1; }
 
     @Override
-    public LocalDate getFechaSeleccionada() {
-        return dpFecha.getValue();
-    }
+    public LocalDate getFechaSeleccionada() { return null; }
 
     @Override
-    public LocalTime getHoraSeleccionada() {
-        String selected = cbHorarios.getValue();
-        return LocalTime.parse(selected);
-    }
+    public LocalTime getHoraSeleccionada() { return null; }
 }

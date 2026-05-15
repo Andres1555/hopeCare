@@ -1,5 +1,6 @@
 package com.esperanza.hopecare.modules.citas_consultas.view.impl;
 
+import com.esperanza.hopecare.modules.citas_consultas.model.Cita;
 import com.esperanza.hopecare.modules.citas_consultas.view.ICitaView;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -9,6 +10,14 @@ import java.util.Scanner;
 public class CitaConsoleView implements ICitaView {
     private Scanner scanner = new Scanner(System.in);
     private List<LocalTime> ultimosHorarios;
+
+    @Override
+    public void mostrarCitasExistentes(List<Cita> citas) {
+        System.out.println("=== CITAS EXISTENTES ===");
+        for (Cita c : citas) {
+            System.out.println(c.getIdCita() + " | " + c.getPacienteNombre() + " | " + c.getMedicoNombre() + " | " + c.getFechaHora() + " | " + c.getEstado());
+        }
+    }
 
     @Override
     public void mostrarHorariosDisponibles(List<LocalTime> bloques) {

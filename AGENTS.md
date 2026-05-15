@@ -125,15 +125,16 @@ La navegación se maneja desde `MainController.java`:
 - `laboratorio.fxml` / `LaboratorioController.java` - Completo
 - `dashboard.fxml` - Estilo visual actualizado (lógica existente)
 
-## Últimos Cambios (Filtros + layout vertical + MVP completo en consultas)
+## Últimos Cambios (Rediseño flujo citas: tabla principal + diálogo modal + filtros)
 - `Especialidad.java` (nuevo) - Modelo para la tabla especialidad (idEspecialidad, nombre)
 - `EspecialidadDAO.java` (nuevo) - DAO con `listarTodas()` para cargar especialidades en ComboBox
 - `HorarioAtencionDAO.java` - Nuevo método `obtenerHorariosPorMedico(int)` que retorna todos los horarios de un médico (todos los días)
-- `ICitaView.java` - Nuevos métodos `mostrarDiasDisponibles(List<Integer>)` y `getDiaSeleccionado()` para el flujo de selección de día
-- `CitaPresenter.java` - Nuevo método `cargarDiasDisponibles(int idMedico)` que consulta horario_atencion y muestra los días disponibles
-- `citas.fxml` - Rediseño completo: layout vertical fijo (tablas una abajo de otra), nuevo ComboBox de especialidad, TextField de búsqueda por nombre, ComboBox de días disponibles, eliminada lógica responsive HBox/VBox
-- `CitasController.java` - Rewrite: buscador de médicos por nombre, filtro por especialidad (ComboBox), auto-asignación de fecha al seleccionar día disponible, siempre layout vertical
-- `CitaConsoleView.java` - Implementados stubs de `mostrarDiasDisponibles` y `getDiaSeleccionado`
-- `CitasPanel.java` (Swing) - Implementados stubs de `mostrarDiasDisponibles` y `getDiaSeleccionado`
+- `CitaDAO.java` - Nuevo método `listarTodasConNombres()` con JOIN a persona (todas las citas ORDER BY fecha DESC)
+- `ICitaView.java` - Nuevos métodos `mostrarCitasExistentes(List<Cita>)`, `mostrarDiasDisponibles(List<Integer>)` y `getDiaSeleccionado()`
+- `CitaPresenter.java` - Nuevos métodos `cargarCitasExistentes()` y `cargarDiasDisponibles(int idMedico)`
+- `citas.fxml` - Rediseñado: tabla de citas existentes (ID, Paciente, Médico, Fecha/Hora, Estado) + botón "Agendar nueva cita". El formulario de creación se eliminó del FXML y ahora es un diálogo modal generado programáticamente
+- `CitasController.java` - Rewrite completo: carga y muestra citas existentes en tabla principal. "Nueva Cita" abre un `Dialog<>` modal con MVP inline (crea `ICitaView` temporal para el diálogo). El diálogo contiene: buscador de pacientes, filtro especialidad + buscador médicos, selector de días disponibles, auto-asignación de fecha, horarios y botón reservar. Al cerrar el diálogo, refresca la tabla de citas.
+- `CitaConsoleView.java` - Implementados stubs de `mostrarCitasExistentes`, `mostrarDiasDisponibles` y `getDiaSeleccionado`
+- `CitasPanel.java` (Swing) - Implementados stubs de `mostrarCitasExistentes`, `mostrarDiasDisponibles` y `getDiaSeleccionado`
 - `ConsultaPresenter.java` - Cambiado a `obtenerCitasPorEstadoConNombres()` para mostrar nombres paciente/médico en ComboBox
 - `ConsultaController.java` - Ahora implementa `IConsultaView` y delega toda la lógica de negocio a `ConsultaPresenter` (MVP completo)
