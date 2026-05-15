@@ -35,9 +35,9 @@ public class ConsultaPresenter {
         Consulta consulta = new Consulta(idCita, diagnostico, sintomas, tratamiento, facturado);
         
         // Ejecutar transacción: insertar consulta y actualizar estado de cita
-        boolean exito = consultaDAO.insertarConsultaYActualizarEstado(consulta);
+        int idConsulta = consultaDAO.insertarConsultaYActualizarEstado(consulta);
         
-        if (exito) {
+        if (idConsulta > 0) {
             view.mostrarExito("Consulta registrada. Cita marcada como ATENDIDA.");
             view.limpiarFormulario();
         } else {

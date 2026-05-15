@@ -1,32 +1,78 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esperanza.hopecare.main.MainController">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esperanza.hopecare.main.MainController" styleClass="main-container">
+    <top>
+        <VBox styleClass="header-container">
+            <HBox styleClass="header-top" spacing="0" alignment="CENTER_LEFT">
+                <HBox styleClass="logo-section" spacing="10" alignment="CENTER">
+                    <StackPane styleClass="logo-icon" prefWidth="36" prefHeight="36">
+                        <Circle radius="18" styleClass="logo-circle"/>
+                        <Label text="+" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                    </StackPane>
+                    <Label text="HopeCare" styleClass="logo-text"/>
+                </HBox>
+
+                <HBox styleClass="nav-links" spacing="30" alignment="CENTER">
+                    <Hyperlink fx:id="linkDashboard" text="Dashboard" styleClass="nav-link" onAction="#navigateToDashboard"/>
+                    <Hyperlink fx:id="linkRegistro" text="Registro" styleClass="nav-link" onAction="#navigateToRegistro"/>
+                    <Hyperlink fx:id="linkCitas" text="Citas Médicas" styleClass="nav-link" onAction="#navigateToCitas"/>
+                    <Hyperlink fx:id="linkFarmacia" text="Farmacia" styleClass="nav-link active" onAction="#navigateToFarmacia"/>
+                    <Hyperlink fx:id="linkLaboratorio" text="Laboratorio" styleClass="nav-link" onAction="#navigateToLaboratorio"/>
+                    <Hyperlink fx:id="linkFacturacion" text="Facturación" styleClass="nav-link" onAction="#navigateToFacturacion"/>
+                </HBox>
+
+                <HBox styleClass="user-section" spacing="12" alignment="CENTER_RIGHT">
+                    <StackPane styleClass="notification-icon">
+                        <Label text="&#128276;" styleClass="notification-symbol"/>
+                        <Circle radius="4" styleClass="notification-dot"/>
+                    </StackPane>
+                    <HBox styleClass="user-info" spacing="10" alignment="CENTER">
+                        <VBox alignment="CENTER_RIGHT">
+                            <Label text="Admin Principal" styleClass="user-name"/>
+                            <Label text="SISTEMAS" styleClass="user-role"/>
+                        </VBox>
+                        <Circle radius="18" styleClass="user-avatar"/>
+                    </HBox>
+                </HBox>
+            </HBox>
+            <HBox styleClass="header-bottom">
+                <Label fx:id="lblBreadcrumb" text="Inicio > Farmacia" styleClass="breadcrumb"/>
+            </HBox>
+        </VBox>
+    </top>
     <center>
-        <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE">
-            <Tab text="Registro de Médicos" closable="false">
-                <fx:include source="../registro/view/registro_medico.fxml" />
+        <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" styleClass="main-tabs">
+            <Tab fx:id="tabDashboard" text="" closable="false">
+                <fx:include source="../dashboard/view/dashboard.fxml"/>
             </Tab>
-            <Tab text="Agendar Cita" closable="false">
-                <fx:include source="../citas/view/citas.fxml" />
+            <Tab fx:id="tabRegistro" text="" closable="false">
+                <fx:include source="../registro/view/registro_medico.fxml"/>
             </Tab>
-            <Tab text="Consulta Médica" closable="false">
-                <fx:include source="../consulta/view/consulta.fxml" />
+            <Tab fx:id="tabCitas" text="" closable="false">
+                <fx:include source="../citas/view/citas.fxml"/>
             </Tab>
-            <Tab text="Farmacia" closable="false">
-                <fx:include source="../farmacia/view/farmacia.fxml" />
+            <Tab fx:id="tabFarmacia" text="" closable="false">
+                <fx:include source="../farmacia/view/farmacia.fxml"/>
             </Tab>
-            <Tab text="Laboratorio" closable="false">
-                <fx:include source="../laboratorio/view/laboratorio.fxml" />
+            <Tab fx:id="tabLaboratorio" text="" closable="false">
+                <fx:include source="../laboratorio/view/laboratorio.fxml"/>
             </Tab>
-            <Tab text="Facturación" closable="false">
-                <fx:include source="../facturacion/view/facturacion.fxml" />
-            </Tab>
-            <Tab text="Dashboard" closable="false">
-                <fx:include source="../dashboard/view/dashboard.fxml" />
+            <Tab fx:id="tabFacturacion" text="" closable="false">
+                <fx:include source="../facturacion/view/facturacion.fxml"/>
             </Tab>
         </TabPane>
     </center>

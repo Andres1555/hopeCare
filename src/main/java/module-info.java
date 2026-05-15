@@ -16,6 +16,11 @@ module com.esperanza.hopecare {
     opens com.esperanza.hopecare.facturacion.view to javafx.fxml;
     opens com.esperanza.hopecare.dashboard.view to javafx.fxml;
 
+    opens com.esperanza.hopecare.modules.medicamentos_lab.model to javafx.base;
+    opens com.esperanza.hopecare.modules.citas_consultas.model to javafx.base;
+    opens com.esperanza.hopecare.modules.pacientes_medicos.model to javafx.base;
+    opens com.esperanza.hopecare.modules.dashboard.model to javafx.base;
+
     exports com.esperanza.hopecare;
     exports com.esperanza.hopecare.main;
 }

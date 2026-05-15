@@ -10,38 +10,31 @@ public class CargarDatosPrueba {
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                // Insertar roles
                 insertarRol(conn, "ADMIN");
                 insertarRol(conn, "RECEPCION");
                 insertarRol(conn, "FARMACIA");
                 insertarRol(conn, "LABORATORIO");
 
-                // Insertar especialidades
                 insertarEspecialidad(conn, "Medicina General");
                 insertarEspecialidad(conn, "Pediatría");
                 insertarEspecialidad(conn, "Traumatología");
 
-                // Insertar medicamentos
                 insertarMedicamento(conn, "Paracetamol 500mg", 100, 20);
                 insertarMedicamento(conn, "Ibuprofeno 400mg", 50, 15);
                 insertarMedicamento(conn, "Amoxicilina 500mg", 30, 10);
 
-                // Insertar exámenes de laboratorio
-                insertarExamenLab(conn, "Hemograma completo", 25000.0);
-                insertarExamenLab(conn, "Glucosa", 8000.0);
-                insertarExamenLab(conn, "Colesterol total", 12000.0);
+                insertarExamenLab(conn, "Hemograma completo", "Análisis de sangre completo", 25000.0, 4);
+                insertarExamenLab(conn, "Glucosa", "Medición de glucosa en sangre", 8000.0, 2);
+                insertarExamenLab(conn, "Colesterol total", "Perfil lipídico", 12000.0, 3);
 
-                // Insertar pacientes (requiere persona primero)
                 int idPersonaPaciente = insertarPersona(conn, "12345678");
                 insertarPaciente(conn, idPersonaPaciente, "HC001");
 
-                // Insertar médicos (con especialidad, persona)
                 int idPersonaMedico = insertarPersona(conn, "87654321");
-                insertarMedico(conn, idPersonaMedico, 1, "RM12345"); // especialidad 1 = Medicina General
+                insertarMedico(conn, idPersonaMedico, 1, "RM12345");
 
-                // Insertar horario de atención para el médico
-                insertarHorario(conn, 1, 1, "08:00", "12:00", 30); // lunes
-                insertarHorario(conn, 1, 2, "08:00", "12:00", 30); // martes
+                insertarHorario(conn, 1, 1, "08:00", "12:00", 30);
+                insertarHorario(conn, 1, 2, "08:00", "12:00", 30);
 
                 conn.commit();
                 System.out.println("Datos de prueba insertados correctamente.");
@@ -83,11 +76,13 @@ public class CargarDatosPrueba {
         }
     }
 
-    private static void insertarExamenLab(Connection conn, String nombre, double precio) throws SQLException {
-        String sql = "INSERT OR IGNORE INTO examen_laboratorio (nombre, precio) VALUES (?, ?)";
+    private static void insertarExamenLab(Connection conn, String nombre, String descripcion, double precio, int tiempoHoras) throws SQLException {
+        String sql = "INSERT OR IGNORE INTO examen_laboratorio (nombre, descripcion, precio, tiempo_resultado_horas) VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
-            ps.setDouble(2, precio);
+            ps.setString(2, descripcion);
+            ps.setDouble(3, precio);
+            ps.setInt(4, tiempoHoras);
             ps.executeUpdate();
         }
     }
@@ -99,7 +94,6 @@ public class CargarDatosPrueba {
             ps.executeUpdate();
             var rs = ps.getGeneratedKeys();
             if (rs.next()) return rs.getInt(1);
-            // Si ya existía, obtener el id
             String select = "SELECT id_persona FROM persona WHERE documento_identidad = ?";
             try (PreparedStatement ps2 = conn.prepareStatement(select)) {
                 ps2.setString(1, documento);

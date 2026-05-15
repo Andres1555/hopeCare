@@ -77,8 +77,8 @@ public class ConsultaPanel extends JPanel {
 
         Consulta consulta = new Consulta(idCita, diagnostico, sintomas, tratamiento, false);
         // Use the existing transactional method
-        boolean ok = consultaDAO.insertarConsultaYActualizarEstado(consulta);
-        if (ok) {
+        int idConsulta = consultaDAO.insertarConsultaYActualizarEstado(consulta);
+        if (idConsulta > 0) {
             JOptionPane.showMessageDialog(this, "Consulta registrada exitosamente");
             cargarCitasPendientes();
             limpiarCampos();

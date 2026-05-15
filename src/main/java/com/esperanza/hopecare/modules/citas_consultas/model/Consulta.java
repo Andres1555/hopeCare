@@ -1,6 +1,7 @@
 package com.esperanza.hopecare.modules.citas_consultas.model;
 
 public class Consulta {
+    private int idConsulta;
     private int idCita;
     private String diagnostico;
     private String sintomas;
@@ -17,7 +18,8 @@ public class Consulta {
         this.facturado = facturado;
     }
 
-    // Getters and Setters
+    public int getIdConsulta() { return idConsulta; }
+    public void setIdConsulta(int idConsulta) { this.idConsulta = idConsulta; }
     public int getIdCita() { return idCita; }
     public void setIdCita(int idCita) { this.idCita = idCita; }
     public String getDiagnostico() { return diagnostico; }

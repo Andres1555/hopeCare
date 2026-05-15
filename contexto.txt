@@ -1,0 +1,286 @@
+===============================================================================
+SISGEHO - SISTEMA DE GESTIÓN HOSPITALARIA
+===============================================================================
+Contexto completo del repositorio – Mayo 2026
+
+ÍNDICE
+1. Resumen del proyecto
+2. Tecnologías y entorno
+3. Arquitectura general (capas y patrones)
+4. Estructura de paquetes actual (JavaFX final)
+5. Descripción de módulos
+6. Base de datos SQLite
+7. Clases y componentes clave
+8. Eventos y Observer
+9. Flujos principales
+10. Estado actual y pendientes
+
+===============================================================================
+1. RESUMEN DEL PROYECTO
+===============================================================================
+HopeCare es un sistema de escritorio para gestión hospitalaria desarrollado en
+Java con NetBeans. Permite gestionar pacientes, médicos, citas, consultas,
+medicamentos, exámenes de laboratorio, facturación y un dashboard con métricas.
+La base de datos es SQLite. Se aplican patrones de diseño sólidos para
+mantener la separación de responsabilidades, la escalabilidad y la facilidad
+de prueba.
+
+===============================================================================
+2. TECNOLOGÍAS Y ENTORNO
+===============================================================================
+- Lenguaje: Java 17 (o superior)
+- IDE recomendado: Apache NetBeans 18+
+- Gestor de dependencias: Maven
+- Base de datos: SQLite (driver xerial sqlite-jdbc)
+- Interfaz gráfica: JavaFX 21 (con FXML y CSS)
+- Logging: SLF4J con binding simple (opcional)
+- Pruebas: JUnit 5 (en fase de implementación)
+
+Dependencias principales (pom.xml):
+- sqlite-jdbc:3.45.1.0
+- javafx-controls:21
+- javafx-fxml:21
+- slf4j-simple:2.0.9 (opcional)
+
+===============================================================================
+3. ARQUITECTURA GENERAL (CAPAS Y PATRONES)
+===============================================================================
+Se ha diseñado una arquitectura modular multicapa que combina varios patrones:
+
+- Capa de presentación: JavaFX (FXML + controladores). Cada módulo tiene su
+  propia carpeta 'view' con el controlador y el archivo FXML.
+- Capa de negocio: Servicios, fachadas y presentadores (ej. CitaPresenter).
+- Capa de persistencia: DAOs (Data Access Objects) para SQLite.
+
+Patrones implementados:
+- MVC (Modelo-Vista-Controlador) en módulos como registro de médicos.
+- MVP (Modelo-Vista-Presentador) en citas médicas (CitaPresenter + ICitaView).
+- Patrón DAO para todas las entidades.
+- Patrón Facade (GestionClinicaFacade) para coordinar farmacia y laboratorio.
+- DTOs inmutables (FacturaDTO, DetalleFacturaDTO) para transferencia de datos.
+- Patrón Observer (EventBus) para actualización reactiva del dashboard.
+- Transaccionalidad explícita con commit/rollback en SQLite.
+
+===============================================================================
+4. ESTRUCTURA DE PAQUETES ACTUAL (JAVAFX FINAL)
+===============================================================================
+com.sisgeho
+│
+├── common
+│   ├── db
+│   │   ├── DatabaseConnection.java
+│   │   ├── CrearBaseDatos.java
+│   │   └── CargarDatosPrueba.java
+│   ├── events
+│   │   ├── EventBus.java
+│   │   ├── NuevaCitaEvent.java
+│   │   └── NuevaFacturaEvent.java
+│   └── util
+│       └── RoleValidator.java
+│
+├── registro
+│   ├── model
+│   │   ├── Persona.java (abstracta o base)
+│   │   ├── Medico.java
+│   │   ├── Paciente.java
+│   │   └── Especialidad.java
+│   ├── dao
+│   │   ├── MedicoDAO.java
+│   │   ├── PacienteDAO.java
+│   │   ├── PersonaDAO.java
+│   │   └── EspecialidadDAO.java
+│   └── view
+│       ├── RegistroMedicoController.java
+│       └── registro_medico.fxml
+│
+├── citas
+│   ├── model
+│   │   ├── Cita.java
+│   │   ├── HorarioAtencion.java
+│   │   ├── CitaDAO.java
+│   │   └── HorarioAtencionDAO.java
+│   ├── presenter
+│   │   └── CitaPresenter.java
+│   └── view
+│       ├── CitasController.java (implementa ICitaView)
+│       └── citas.fxml
+│
+├── consulta
+│   ├── model
+│   │   ├── Consulta.java
+│   │   └── ConsultaDAO.java
+│   └── view
+│       ├── ConsultaController.java
+│       └── consulta.fxml
+│
+├── farmacia
+│   ├── model
+│   │   ├── Medicamento.java
+│   │   ├── Receta.java
+│   │   ├── EntregaMedicamento.java
+│   │   ├── MedicamentoDAO.java
+│   │   └── EntregaMedicamentoDAO.java
+│   └── view
+│       ├── FarmaciaController.java
+│       └── farmacia.fxml
+│
+├── laboratorio
+│   ├── model
+│   │   ├── ExamenLaboratorio.java
+│   │   ├── SolicitudExamen.java
+│   │   ├── ExamenDAO.java
+│   │   └── SolicitudExamenDAO.java
+│   └── view
+│       ├── LaboratorioController.java
+│       └── laboratorio.fxml
+│
+├── facturacion
+│   ├── dto
+│   │   ├── FacturaDTO.java
+│   │   └── DetalleFacturaDTO.java
+│   ├── service
+│   │   └── FacturacionService.java
+│   └── view
+│       ├── FacturacionController.java
+│       └── facturacion.fxml
+│
+├── dashboard
+│   ├── dao
+│   │   └── DashboardDAO.java
+│   └── view
+│       ├── DashboardController.java
+│       └── dashboard.fxml
+│
+├── facade
+│   └── GestionClinicaFacade.java
+│
+└── main
+    ├── SisgehoApp.java
+    ├── MainController.java
+    └── main.fxml
+
+Recursos estáticos: src/main/resources/com/sisgeho/common/css/sisgeho.css
+
+===============================================================================
+5. DESCRIPCIÓN DE MÓDULOS
+===============================================================================
+- Registro: ABM de médicos y pacientes con herencia desde Persona. Transacción
+  que guarda en persona y luego en medico/paciente.
+- Citas: Agenda de citas usando horario_atencion (día, hora inicio/fin,
+  intervalo). Calcula bloques disponibles y valida solapamiento.
+- Consulta médica: Registro de síntomas, diagnóstico, tratamiento. Cambia
+  estado de cita a ATENDIDA.
+- Farmacia: Entrega de medicamentos asociados a recetas, descuento automático
+  del stock_actual. Usa fachada con control de roles.
+- Laboratorio: Registro de resultados de exámenes asociados a solicitudes.
+- Facturación: Agrupa consultas, exámenes y medicamentos pendientes de facturar
+  (campo facturado = 0). Calcula subtotal, impuesto, total. Genera factura y
+  detalles. Usa DTOs inmutables.
+- Dashboard: Muestra citas del día, ingresos del mes, medicamentos con stock
+  bajo. Se actualiza automáticamente con eventos (Observer).
+
+===============================================================================
+6. BASE DE DATOS SQLITE
+===============================================================================
+Archivo: sisgeho.db (se crea automáticamente en la raíz del proyecto)
+
+Principales tablas (script completo en sisgeho_schema.sql):
+- persona (id_persona, documento_identidad)
+- medico (id_medico, id_persona, id_especialidad, registro_medico)
+- paciente (id_paciente, id_persona, historia_clinica)
+- especialidad
+- horario_atencion (id_medico, dia_semana, hora_inicio, hora_fin, intervalo_minutos)
+- cita (id_paciente, id_medico, fecha_hora, estado)
+- consulta (id_cita, diagnostico, sintomas, tratamiento, facturado)
+- medicamento (id_medicamento, nombre, stock_actual, stock_minimo)
+- receta, detalle_receta, entrega_medicamento
+- examen_laboratorio, solicitud_examen
+- factura, detalle_factura
+- usuario, rol
+
+===============================================================================
+7. CLASES Y COMPONENTES CLAVE
+===============================================================================
+- DatabaseConnection: Singleton para conexión a SQLite con registro explícito
+  del driver.
+- CrearBaseDatos: Ejecuta el script SQL para crear tablas.
+- CargarDatosPrueba: Inserta datos mínimos (roles, especialidades,
+  medicamentos, horarios, médico de prueba, paciente).
+- MedicoDAO.insertarMedico(): Transacción que guarda en persona y luego en
+  medico.
+- CitaPresenter: Lógica de negocio para horarios: genera bloques de tiempo a
+  partir de intervalo_minutos y filtra ocupados.
+- FacturacionService.generarFactura(): Reúne conceptos pendientes, calcula
+  totales, inserta factura y detalles, marca conceptos como facturados. Todo
+  en una transacción.
+- GestionClinicaFacade: Métodos procesarEntregaMedicamento y
+  registrarResultadoExamen con validación de rol (FARMACIA, LABORATORIO).
+- EventBus: Singleton que permite registro y publicación de eventos. Usado
+  para refrescar el dashboard tras nueva cita o factura.
+- DashboardDAO: Consultas agregadas a SQLite (COUNT, SUM) para métricas.
+
+===============================================================================
+8. EVENTOS Y OBSERVER
+===============================================================================
+Eventos: NuevaCitaEvent, NuevaFacturaEvent
+Publicación: desde CitaPresenter (al reservar cita) y FacturacionService
+          (al generar factura).
+Suscripción: DashboardController se suscribe en initialize() y actualiza los
+             indicadores con Platform.runLater() para no bloquear la UI.
+
+===============================================================================
+9. FLUJOS PRINCIPALES
+===============================================================================
+- Registrar médico → guardar en persona y medico.
+- Agendar cita → seleccionar médico y fecha, ver horarios disponibles según
+  intervalo, reservar.
+- Atender consulta → cargar cita programada, ingresar síntomas/diagnóstico,
+  guardar consulta, cambiar estado cita a ATENDIDA.
+- Solicitar examen / recetar medicamento → (pendiente implementar diálogos)
+- Farmacia → seleccionar receta y medicamento, entregar, disminuir stock.
+- Laboratorio → seleccionar solicitud pendiente, ingresar resultado.
+- Facturación → generar factura con todos los conceptos no facturados.
+- Dashboard → visualiza métricas actualizadas automáticamente.
+
+===============================================================================
+10. ESTADO ACTUAL Y PENDIENTES
+===============================================================================
+LO COMPLETADO:
+- Estructura de paquetes final según módulos.
+- Todas las clases DAO, modelos, servicios, fachada y DTOs.
+- Controladores JavaFX y archivos FXML para todos los módulos.
+- EventBus y eventos funcionando.
+- Base de datos creada y poblada.
+- La aplicación se lanza desde SisgehoApp (mvn javafx:run).
+
+PENDIENTES / PRÓXIMOS PASOS:
+- Terminar los diálogos de “Solicitar examen” y “Recetar medicamento” dentro de
+  ConsultaController (actualmente solo muestran alertas informativas).
+- Integrar completamente el login con roles (actualmente se pasa rol fijo
+  "FARMACIA" o "LABORATORIO").
+- Agregar reportes (JasperReports o similar).
+- Mejorar la validación de entrada y manejo de excepciones.
+- Escribir pruebas unitarias con JUnit (mock de DAOs).
+- Generar un único archivo JAR ejecutable con Maven Assembly Plugin.
+
+===============================================================================
+INSTRUCCIONES PARA EJECUTAR EL PROYECTO
+===============================================================================
+1. Clonar repositorio o descargar código.
+2. Abrir con NetBeans (o IntelliJ) como proyecto Maven.
+3. Asegurar que el archivo pom.xml tenga las dependencias necesarias.
+4. Ejecutar la clase principal: com.sisgeho.main.SisgehoApp
+   o usar comando: mvn javafx:run
+5. Las tablas se crearán automáticamente al ejecutar CrearBaseDatos (opcional,
+   también se pueden crear manualmente con el script).
+6. Datos de prueba: ejecutar CargarDatosPrueba.
+
+===============================================================================
+CONTACTO Y NOTAS
+===============================================================================
+Este documento resume el estado completo del repositorio. Para cualquier
+duda o cambio, referirse a la estructura de paquetes y clases listadas.
+El sistema es funcional para demostrar la arquitectura y puede ser extendido.
+
+-- Fin del contexto --
+===============================================================================

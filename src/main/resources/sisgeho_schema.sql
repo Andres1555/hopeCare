@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS paciente (
 CREATE TABLE IF NOT EXISTS horario_atencion (
     id_horario INTEGER PRIMARY KEY AUTOINCREMENT,
     id_medico INTEGER NOT NULL,
-    dia_semana INTEGER NOT NULL, -- 1=Lunes, 7=Domingo
+    dia_semana INTEGER NOT NULL,
     hora_inicio TEXT NOT NULL,
     hora_fin TEXT NOT NULL,
     intervalo_minutos INTEGER NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS cita (
     id_cita INTEGER PRIMARY KEY AUTOINCREMENT,
     id_paciente INTEGER NOT NULL,
     id_medico INTEGER NOT NULL,
-    fecha_hora TEXT NOT NULL, -- ISO format: 'YYYY-MM-DD HH:MM:SS'
+    fecha_hora TEXT NOT NULL,
     estado TEXT DEFAULT 'PROGRAMADA',
     FOREIGN KEY (id_paciente) REFERENCES paciente(id_paciente),
     FOREIGN KEY (id_medico) REFERENCES medico(id_medico)
@@ -80,6 +80,9 @@ CREATE TABLE IF NOT EXISTS medicamento (
 CREATE TABLE IF NOT EXISTS receta (
     id_receta INTEGER PRIMARY KEY AUTOINCREMENT,
     id_consulta INTEGER NOT NULL,
+    fecha_emision TEXT DEFAULT CURRENT_TIMESTAMP,
+    instrucciones TEXT,
+    activa INTEGER DEFAULT 1,
     FOREIGN KEY (id_consulta) REFERENCES consulta(id_consulta)
 );
 
@@ -88,6 +91,7 @@ CREATE TABLE IF NOT EXISTS detalle_receta (
     id_receta INTEGER NOT NULL,
     id_medicamento INTEGER NOT NULL,
     cantidad INTEGER NOT NULL,
+    dosis_indicacion TEXT,
     FOREIGN KEY (id_receta) REFERENCES receta(id_receta),
     FOREIGN KEY (id_medicamento) REFERENCES medicamento(id_medicamento)
 );
@@ -106,15 +110,19 @@ CREATE TABLE IF NOT EXISTS entrega_medicamento (
 CREATE TABLE IF NOT EXISTS examen_laboratorio (
     id_examen INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre TEXT NOT NULL,
-    precio REAL NOT NULL
+    descripcion TEXT,
+    precio REAL NOT NULL,
+    tiempo_resultado_horas INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS solicitud_examen (
     id_solicitud INTEGER PRIMARY KEY AUTOINCREMENT,
     id_consulta INTEGER NOT NULL,
     id_examen INTEGER NOT NULL,
+    fecha_solicitud TEXT DEFAULT CURRENT_TIMESTAMP,
     estado TEXT DEFAULT 'PENDIENTE',
     resultado_texto TEXT,
+    realizado_por INTEGER,
     facturado INTEGER DEFAULT 0,
     FOREIGN KEY (id_consulta) REFERENCES consulta(id_consulta),
     FOREIGN KEY (id_examen) REFERENCES examen_laboratorio(id_examen)
@@ -137,7 +145,7 @@ CREATE TABLE IF NOT EXISTS detalle_factura (
     id_factura INTEGER NOT NULL,
     concepto TEXT NOT NULL,
     id_referencia INTEGER NOT NULL,
-    tipo_referencia TEXT NOT NULL, -- 'CONSULTA', 'EXAMEN', 'MEDICAMENTO'
+    tipo_referencia TEXT NOT NULL,
     monto REAL NOT NULL,
     FOREIGN KEY (id_factura) REFERENCES factura(id_factura)
 );
