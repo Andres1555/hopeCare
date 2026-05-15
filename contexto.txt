@@ -238,7 +238,10 @@ Principales tablas (script completo en sisgeho_schema.sql):
   en consulta y cambia cita.estado a 'ATENDIDA' con commit/rollback.
 - CitasController (JavaFX): Implementa ICitaView con dos TableViews (Pacientes
   y Médicos) para selección visual, DatePicker y ComboBox de horarios. Carga
-  datos desde PacienteDAO.listarTodos() y MedicoDAO.listarTodos().
+  datos desde PacienteDAO.listarTodos() y MedicoDAO.listarTodos(). Diseño
+  responsivo: tablas lado a lado (HBox) en pantallas ≥750px, apiladas
+  verticalmente (VBox) en pantallas más angostas. Tablas con
+  CONSTRAINED_RESIZE_POLICY para que las columnas se ajusten al ancho.
 - CitasPanel (Swing): Implementación alternativa de ICitaView en Swing (usa
   TextFields).
 - ConsultaController (JavaFX): Controlador standalone con ComboBox de citas

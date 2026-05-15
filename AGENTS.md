@@ -137,6 +137,8 @@ La navegación se maneja desde `MainController.java`:
 - `CitasController.java` - Ahora usa selección por tabla en lugar de IDs manuales
 - `ConsultaController.java` - Muestra nombres de paciente/médico en lugar de solo IDs
 - `CargarDatosPrueba.java` - Reescrito: 5 pacientes, 3 médicos, 10 citas, datos realistas con nombre/apellido
-- `HopecareApp.java` - Inicialización automática de BD en `init()` (crea schema + pobla datos al primer inicio)
+- `HopecareApp.java` - Inicialización automática de BD en `init()` (crea schema + pobla datos al primer inicio) + migración de columnas faltantes con ALTER TABLE
 - `sisgeho_schema.sql` - Agregadas columnas `tipo_persona/nombre/apellido` en persona y `activo` en medico
+- `citas.fxml` - Diseño responsivo: CONSTRAINED_RESIZE_POLICY en tablas + fx:id en contenedores para toggle HBox/VBox
+- `CitasController.java` - Ajuste automático de layout: tablas lado a lado (>750px) o apiladas (<750px)
 - `module-info.java` - Abierto `common.model` a `javafx.base`
