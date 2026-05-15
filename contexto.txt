@@ -28,13 +28,14 @@ de prueba.
 ===============================================================================
 2. TECNOLOGÍAS Y ENTORNO
 ===============================================================================
-- Lenguaje: Java 17 (o superior)
-- IDE recomendado: Apache NetBeans 18+
+- Lenguaje: Java 17+
+- IDE recomendado: Apache NetBeans 18+ / IntelliJ IDEA
 - Gestor de dependencias: Maven
 - Base de datos: SQLite (driver xerial sqlite-jdbc)
-- Interfaz gráfica: JavaFX 21 (con FXML y CSS)
+- Interfaz gráfica: JavaFX 21 (FXML + CSS) y Swing (panel alternativo de citas)
 - Logging: SLF4J con binding simple (opcional)
 - Pruebas: JUnit 5 (en fase de implementación)
+- Arquitectura: MVP + DAO + Fachada + EventBus (Observer)
 
 Dependencias principales (pom.xml):
 - sqlite-jdbc:3.45.1.0
@@ -47,129 +48,133 @@ Dependencias principales (pom.xml):
 ===============================================================================
 Se ha diseñado una arquitectura modular multicapa que combina varios patrones:
 
-- Capa de presentación: JavaFX (FXML + controladores). Cada módulo tiene su
-  propia carpeta 'view' con el controlador y el archivo FXML.
-- Capa de negocio: Servicios, fachadas y presentadores (ej. CitaPresenter).
-- Capa de persistencia: DAOs (Data Access Objects) para SQLite.
+- Capa de presentación: JavaFX (FXML + controladores), Swing (CitasPanel) y
+  consola (CitaConsoleView). Cada módulo tiene su propia carpeta 'view'.
+- Capa de negocio: Presentadores (CitaPresenter, ConsultaPresenter), servicios
+  y fachadas (GestionClinicaFacade).
+- Capa de persistencia: DAOs (Data Access Objects) para SQLite con transacciones
+  explícitas.
 
 Patrones implementados:
+- MVP (Modelo-Vista-Presentador) en citas_consultas con interfaces ICitaView e
+  IConsultaView, permitiendo múltiples implementaciones de vista (JavaFX, Swing,
+  consola).
 - MVC (Modelo-Vista-Controlador) en módulos como registro de médicos.
-- MVP (Modelo-Vista-Presentador) en citas médicas (CitaPresenter + ICitaView).
 - Patrón DAO para todas las entidades.
 - Patrón Facade (GestionClinicaFacade) para coordinar farmacia y laboratorio.
 - DTOs inmutables (FacturaDTO, DetalleFacturaDTO) para transferencia de datos.
-- Patrón Observer (EventBus) para actualización reactiva del dashboard.
-- Transaccionalidad explícita con commit/rollback en SQLite.
+- Patrón Observer (EventBus) para actualización reactiva del dashboard ante
+  eventos como NuevaCitaEvent y NuevaFacturaEvent.
+- Transaccionalidad explícita con commit/rollback en operaciones que abarcan
+  múltiples tablas (registro de persona+medico, consulta+cita, receta+detalle).
 
 ===============================================================================
 4. ESTRUCTURA DE PAQUETES ACTUAL (JAVAFX FINAL)
 ===============================================================================
-com.sisgeho
+com.esperanza.hopecare
 │
 ├── common
 │   ├── db
-│   │   ├── DatabaseConnection.java
-│   │   ├── CrearBaseDatos.java
-│   │   └── CargarDatosPrueba.java
+│   │   ├── DatabaseConnection.java          (Singleton, driver + conexión SQLite)
+│   │   ├── CrearBaseDatos.java              (Ejecuta schema.sql)
+│   │   └── CargarDatosPrueba.java           (Datos iniciales)
 │   ├── events
-│   │   ├── EventBus.java
+│   │   ├── EventBus.java                    (Singleton, Observer)
 │   │   ├── NuevaCitaEvent.java
 │   │   └── NuevaFacturaEvent.java
 │   └── util
 │       └── RoleValidator.java
 │
-├── registro
-│   ├── model
-│   │   ├── Persona.java (abstracta o base)
-│   │   ├── Medico.java
-│   │   ├── Paciente.java
-│   │   └── Especialidad.java
-│   ├── dao
-│   │   ├── MedicoDAO.java
-│   │   ├── PacienteDAO.java
-│   │   ├── PersonaDAO.java
-│   │   └── EspecialidadDAO.java
-│   └── view
-│       ├── RegistroMedicoController.java
-│       └── registro_medico.fxml
+├── modules                                  (Capa de negocio)
+│   ├── citas_consultas                      (MVP - Citas y Consultas)
+│   │   ├── model
+│   │   │   ├── Cita.java
+│   │   │   ├── Consulta.java
+│   │   │   └── HorarioAtencion.java
+│   │   ├── dao
+│   │   │   ├── CitaDAO.java
+│   │   │   ├── ConsultaDAO.java             (Transacción: inserta consulta + actualiza cita)
+│   │   │   └── HorarioAtencionDAO.java
+│   │   ├── presenter
+│   │   │   ├── CitaPresenter.java           (Lógica horarios, reserva + EventBus)
+│   │   │   └── ConsultaPresenter.java       (Registro consulta, solicitar examen, recetar)
+│   │   └── view
+│   │       ├── ICitaView.java               (Interfaz para múltiples vistas)
+│   │       ├── IConsultaView.java           (Interfaz + inner class RecetaRequest)
+│   │       └── impl
+│   │           └── CitaConsoleView.java     (Implementación consola)
+│   ├── pacientes_medicos                    (CRUD)
+│   │   ├── model (Persona, Medico, Paciente, Especialidad)
+│   │   ├── dao (PersonaDAO, MedicoDAO, PacienteDAO, EspecialidadDAO)
+│   │   └── service
+│   ├── medicamentos_lab                     (Fachada)
+│   │   ├── model (Medicamento, Receta, DetalleReceta, EntregaMedicamento,
+│   │   │          ExamenLaboratorio, SolicitudExamen)
+│   │   ├── dao (MedicamentoDAO, RecetaDAO, DetalleRecetaDAO,
+│   │   │        EntregaMedicamentoDAO, ExamenLaboratorioDAO, SolicitudExamenDAO)
+│   │   └── service
+│   ├── facturacion                          (Capas tradicional)
+│   │   ├── dto (FacturaDTO, DetalleFacturaDTO)
+│   │   ├── service (FacturacionService)
+│   │   └── dao
+│   └── dashboard
+│       └── dao (DashboardDAO)
 │
-├── citas
-│   ├── model
-│   │   ├── Cita.java
-│   │   ├── HorarioAtencion.java
-│   │   ├── CitaDAO.java
-│   │   └── HorarioAtencionDAO.java
-│   ├── presenter
-│   │   └── CitaPresenter.java
+├── citas                                    (Vista JavaFX - Citas)
 │   └── view
-│       ├── CitasController.java (implementa ICitaView)
+│       ├── CitasController.java             (Implementa ICitaView)
 │       └── citas.fxml
 │
-├── consulta
-│   ├── model
-│   │   ├── Consulta.java
-│   │   └── ConsultaDAO.java
+├── consulta                                 (Vista JavaFX - Consultas)
 │   └── view
-│       ├── ConsultaController.java
+│       ├── ConsultaController.java          (Standalone, con diálogos examen/receta)
 │       └── consulta.fxml
 │
 ├── farmacia
-│   ├── model
-│   │   ├── Medicamento.java
-│   │   ├── Receta.java
-│   │   ├── EntregaMedicamento.java
-│   │   ├── MedicamentoDAO.java
-│   │   └── EntregaMedicamentoDAO.java
-│   └── view
-│       ├── FarmaciaController.java
-│       └── farmacia.fxml
+│   └── view (FarmaciaController.java, farmacia.fxml)
 │
 ├── laboratorio
-│   ├── model
-│   │   ├── ExamenLaboratorio.java
-│   │   ├── SolicitudExamen.java
-│   │   ├── ExamenDAO.java
-│   │   └── SolicitudExamenDAO.java
-│   └── view
-│       ├── LaboratorioController.java
-│       └── laboratorio.fxml
+│   └── view (LaboratorioController.java, laboratorio.fxml)
 │
 ├── facturacion
-│   ├── dto
-│   │   ├── FacturaDTO.java
-│   │   └── DetalleFacturaDTO.java
-│   ├── service
-│   │   └── FacturacionService.java
-│   └── view
-│       ├── FacturacionController.java
-│       └── facturacion.fxml
+│   └── view (FacturacionController.java, facturacion.fxml)
 │
 ├── dashboard
-│   ├── dao
-│   │   └── DashboardDAO.java
-│   └── view
-│       ├── DashboardController.java
-│       └── dashboard.fxml
+│   └── view (DashboardController.java, dashboard.fxml)
+│
+├── ui
+│   └── citas
+│       └── CitasPanel.java                 (Implementación Swing de ICitaView)
 │
 ├── facade
 │   └── GestionClinicaFacade.java
 │
 └── main
-    ├── SisgehoApp.java
-    ├── MainController.java
+    ├── HopecareApp.java                     (Clase de inicio JavaFX)
+    ├── MainController.java                  (TabPane principal)
     └── main.fxml
 
-Recursos estáticos: src/main/resources/com/sisgeho/common/css/sisgeho.css
+Recursos estáticos:
+  src/main/resources/com/esperanza/hopecare/common/css/hopecare.css
+  src/main/resources/com/esperanza/hopecare/citas/view/citas.fxml
+  src/main/resources/com/esperanza/hopecare/consulta/view/consulta.fxml
 
 ===============================================================================
 5. DESCRIPCIÓN DE MÓDULOS
 ===============================================================================
 - Registro: ABM de médicos y pacientes con herencia desde Persona. Transacción
   que guarda en persona y luego en medico/paciente.
-- Citas: Agenda de citas usando horario_atencion (día, hora inicio/fin,
-  intervalo). Calcula bloques disponibles y valida solapamiento.
-- Consulta médica: Registro de síntomas, diagnóstico, tratamiento. Cambia
-  estado de cita a ATENDIDA.
+- Citas: Agenda de citas usando horario_atencion (día_semana, hora_inicio,
+  hora_fin, intervalo_minutos). El CitaPresenter genera bloques de tiempo
+  disponibles, filtra los ocupados por citas existentes y reserva. Publica
+  NuevaCitaEvent en EventBus al agendar. Múltiples vistas: JavaFX (CitasController
+  con DatePicker + ComboBox), Swing (CitasPanel) y consola (CitaConsoleView).
+- Consulta médica: El ConsultaPresenter carga citas PROGRAMADA, permite
+  seleccionar una, registrar síntomas/diagnóstico/tratamiento (inserta en
+  consulta y cambia estado cita a ATENDIDA en una transacción). Una vez
+  guardada, permite solicitar exámenes de laboratorio y recetar medicamentos
+  (ambos con manejo transaccional explícito). El ConsultaController (JavaFX)
+  implementa la UI con diálogos modales para seleccionar exámenes y recetas.
 - Farmacia: Entrega de medicamentos asociados a recetas, descuento automático
   del stock_actual. Usa fachada con control de roles.
 - Laboratorio: Registro de resultados de exámenes asociados a solicitudes.
@@ -209,7 +214,22 @@ Principales tablas (script completo en sisgeho_schema.sql):
 - MedicoDAO.insertarMedico(): Transacción que guarda en persona y luego en
   medico.
 - CitaPresenter: Lógica de negocio para horarios: genera bloques de tiempo a
-  partir de intervalo_minutos y filtra ocupados.
+  partir de intervalo_minutos, filtra ocupados y publica NuevaCitaEvent.
+- ConsultaPresenter: Coordina el flujo completo de consulta: carga citas
+  pendientes, registra consulta (transacción), solicita exámenes y receta
+  medicamentos con transaccionalidad explícita.
+- CitaDAO: Métodos obtenerCitasPorMedicoYFecha (para filtrar horarios),
+  insertarCita, actualizarEstado, obtenerCitasPorEstado.
+- ConsultaDAO.insertarConsultaYActualizarEstado(): Transacción que inserta
+  en consulta y cambia cita.estado a 'ATENDIDA' con commit/rollback.
+- CitasController (JavaFX): Implementa ICitaView con DatePicker, ComboBox y
+  TextField. Se comunica con CitaPresenter.
+- CitasPanel (Swing): Implementación alternativa de ICitaView en Swing.
+- ConsultaController (JavaFX): Controlador standalone con diálogos modales
+  (Dialog) para solicitarExamen y recetarMedicamento, con transacciones
+  manuales commit/rollback.
+- IConsultaView.RecetaRequest: Clase interna anidada para transportar datos
+  de receta (idMedicamento, cantidad, dosis) desde la vista al presentador.
 - FacturacionService.generarFactura(): Reúne conceptos pendientes, calcula
   totales, inserta factura y detalles, marca conceptos como facturados. Todo
   en una transacción.
@@ -223,39 +243,60 @@ Principales tablas (script completo en sisgeho_schema.sql):
 8. EVENTOS Y OBSERVER
 ===============================================================================
 Eventos: NuevaCitaEvent, NuevaFacturaEvent
-Publicación: desde CitaPresenter (al reservar cita) y FacturacionService
-          (al generar factura).
+Publicación:
+  - NuevaCitaEvent: desde CitaPresenter.reservarCita() tras insertar la cita.
+  - NuevaFacturaEvent: desde FacturacionService.generarFactura().
 Suscripción: DashboardController se suscribe en initialize() y actualiza los
-             indicadores con Platform.runLater() para no bloquear la UI.
+             indicadores (citas del día, ingresos del mes, stock bajo) con
+             Platform.runLater() para no bloquear la UI.
 
 ===============================================================================
 9. FLUJOS PRINCIPALES
 ===============================================================================
-- Registrar médico → guardar en persona y medico.
-- Agendar cita → seleccionar médico y fecha, ver horarios disponibles según
-  intervalo, reservar.
-- Atender consulta → cargar cita programada, ingresar síntomas/diagnóstico,
-  guardar consulta, cambiar estado cita a ATENDIDA.
-- Solicitar examen / recetar medicamento → (pendiente implementar diálogos)
-- Farmacia → seleccionar receta y medicamento, entregar, disminuir stock.
+- Registrar médico → guardar en persona y medico (transacción).
+- Agendar cita → CitaPresenter: seleccionar médico y fecha, consultar
+  HorarioAtencionDAO, generar bloques según intervalo_minutos, filtrar
+  ocupados vía CitaDAO.obtenerCitasPorMedicoYFecha(), mostrar disponibles
+  en la vista, reservar (insertar cita + publicar NuevaCitaEvent).
+- Atender consulta → ConsultaPresenter/Controller: cargar citas PROGRAMADA,
+  seleccionar una, ingresar síntomas/diagnóstico/tratamiento, ejecutar
+  ConsultaDAO.insertarConsultaYActualizarEstado() (transacción: INSERT
+  consulta + UPDATE cita SET estado='ATENDIDA'), habilitar botones de
+  solicitar examen y recetar medicamento.
+- Solicitar examen → desde consulta guardada: diálogo modal lista
+  exámenes disponibles (ExamenLaboratorioDAO), seleccionar, insertar
+  SolicitudExamen (con Connection explícita).
+- Recetar medicamento → desde consulta guardada: diálogo modal con
+  ComboBox de medicamentos, Spinner de cantidad, TextField de dosis.
+  Transacción explícita: INSERT receta + INSERT detalle_receta con
+  commit/rollback.
+- Farmacia → seleccionar receta y medicamento, entregar, disminuir stock
+  (vía GestionClinicaFacade con validación de rol FARMACIA).
 - Laboratorio → seleccionar solicitud pendiente, ingresar resultado.
-- Facturación → generar factura con todos los conceptos no facturados.
-- Dashboard → visualiza métricas actualizadas automáticamente.
+- Facturación → FacturacionService.generarFactura(): reúne conceptos no
+  facturados (facturado=0), calcula subtotal/impuesto/total, INSERT factura +
+  detalles, UPDATE conceptos como facturados, publica NuevaFacturaEvent.
+  Todo en una transacción.
+- Dashboard → DashboardController suscrito a EventBus, recibe eventos y
+  actualiza métricas con Platform.runLater().
 
 ===============================================================================
 10. ESTADO ACTUAL Y PENDIENTES
 ===============================================================================
 LO COMPLETADO:
-- Estructura de paquetes final según módulos.
+- Estructura de paquetes final según módulos (com.esperanza.hopecare).
+- Módulo citas_consultas completo con MVP (ICitaView, IConsultaView,
+  CitaPresenter, ConsultaPresenter) y tres implementaciones de vista:
+  JavaFX (CitasController), Swing (CitasPanel) y consola (CitaConsoleView).
+- Diálogos de "Solicitar examen" y "Recetar medicamento" implementados en
+  ConsultaController con transaccionalidad explícita (commit/rollback).
 - Todas las clases DAO, modelos, servicios, fachada y DTOs.
 - Controladores JavaFX y archivos FXML para todos los módulos.
-- EventBus y eventos funcionando.
-- Base de datos creada y poblada.
-- La aplicación se lanza desde SisgehoApp (mvn javafx:run).
+- EventBus y eventos funcionando (NuevaCitaEvent, NuevaFacturaEvent).
+- Base de datos creada y poblada con datos de prueba.
+- La aplicación se lanza desde HopecareApp (mvn javafx:run).
 
 PENDIENTES / PRÓXIMOS PASOS:
-- Terminar los diálogos de “Solicitar examen” y “Recetar medicamento” dentro de
-  ConsultaController (actualmente solo muestran alertas informativas).
 - Integrar completamente el login con roles (actualmente se pasa rol fijo
   "FARMACIA" o "LABORATORIO").
 - Agregar reportes (JasperReports o similar).
@@ -269,7 +310,7 @@ INSTRUCCIONES PARA EJECUTAR EL PROYECTO
 1. Clonar repositorio o descargar código.
 2. Abrir con NetBeans (o IntelliJ) como proyecto Maven.
 3. Asegurar que el archivo pom.xml tenga las dependencias necesarias.
-4. Ejecutar la clase principal: com.sisgeho.main.SisgehoApp
+4. Ejecutar la clase principal: com.esperanza.hopecare.main.HopecareApp
    o usar comando: mvn javafx:run
 5. Las tablas se crearán automáticamente al ejecutar CrearBaseDatos (opcional,
    también se pueden crear manualmente con el script).

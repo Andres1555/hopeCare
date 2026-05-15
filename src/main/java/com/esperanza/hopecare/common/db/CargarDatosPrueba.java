@@ -35,6 +35,13 @@ public class CargarDatosPrueba {
 
                 insertarHorario(conn, 1, 1, "08:00", "12:00", 30);
                 insertarHorario(conn, 1, 2, "08:00", "12:00", 30);
+                insertarHorario(conn, 1, 3, "14:00", "18:00", 30);
+                insertarHorario(conn, 1, 4, "14:00", "18:00", 30);
+                insertarHorario(conn, 1, 5, "08:00", "12:00", 30);
+
+                insertarCita(conn, 1, 1, java.time.LocalDateTime.now().plusDays(1).withHour(9).withMinute(0).withSecond(0).withNano(0), "PROGRAMADA");
+                insertarCita(conn, 1, 1, java.time.LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0), "PROGRAMADA");
+                insertarCita(conn, 1, 1, java.time.LocalDateTime.now().plusDays(1).withHour(11).withMinute(0).withSecond(0).withNano(0), "PROGRAMADA");
 
                 conn.commit();
                 System.out.println("Datos de prueba insertados correctamente.");
@@ -131,6 +138,17 @@ public class CargarDatosPrueba {
             ps.setString(3, horaInicio);
             ps.setString(4, horaFin);
             ps.setInt(5, intervalo);
+            ps.executeUpdate();
+        }
+    }
+
+    private static void insertarCita(Connection conn, int idPaciente, int idMedico, java.time.LocalDateTime fechaHora, String estado) throws SQLException {
+        String sql = "INSERT OR IGNORE INTO cita (id_paciente, id_medico, fecha_hora, estado) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idPaciente);
+            ps.setInt(2, idMedico);
+            ps.setString(3, fechaHora.toString());
+            ps.setString(4, estado);
             ps.executeUpdate();
         }
     }
