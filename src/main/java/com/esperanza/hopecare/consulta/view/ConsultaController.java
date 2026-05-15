@@ -1,59 +1,64 @@
 package com.esperanza.hopecare.consulta.view;
 
 import com.esperanza.hopecare.modules.citas_consultas.model.Cita;
-import com.esperanza.hopecare.modules.citas_consultas.dao.CitaDAO;
-import com.esperanza.hopecare.modules.citas_consultas.model.Consulta;
-import com.esperanza.hopecare.modules.citas_consultas.dao.ConsultaDAO;
-import com.esperanza.hopecare.modules.medicamentos_lab.dao.MedicamentoDAO;
-import com.esperanza.hopecare.modules.medicamentos_lab.dao.RecetaDAO;
-import com.esperanza.hopecare.modules.medicamentos_lab.dao.DetalleRecetaDAO;
-import com.esperanza.hopecare.modules.medicamentos_lab.dao.ExamenLaboratorioDAO;
-import com.esperanza.hopecare.modules.medicamentos_lab.dao.SolicitudExamenDAO;
-import com.esperanza.hopecare.modules.medicamentos_lab.model.Medicamento;
+import com.esperanza.hopecare.modules.citas_consultas.presenter.ConsultaPresenter;
+import com.esperanza.hopecare.modules.citas_consultas.view.IConsultaView;
 import com.esperanza.hopecare.modules.medicamentos_lab.model.ExamenLaboratorio;
-import com.esperanza.hopecare.modules.medicamentos_lab.model.Receta;
-import com.esperanza.hopecare.modules.medicamentos_lab.model.DetalleReceta;
-import com.esperanza.hopecare.modules.medicamentos_lab.model.SolicitudExamen;
-import com.esperanza.hopecare.common.db.DatabaseConnection;
+import com.esperanza.hopecare.modules.medicamentos_lab.model.Medicamento;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-public class ConsultaController {
+public class ConsultaController implements IConsultaView {
     @FXML private ComboBox<String> cbCitasPendientes;
     @FXML private TextArea txtSintomas, txtDiagnostico, txtTratamiento;
     @FXML private Button btnCargar, btnGuardar, btnSolicitarExamen, btnRecetar;
 
-    private CitaDAO citaDAO;
-    private ConsultaDAO consultaDAO;
+    private ConsultaPresenter presenter;
     private ObservableList<String> citasList;
     private int idCitaSeleccionada = -1;
-    private int idConsultaActual = -1;
 
     @FXML
     public void initialize() {
-        citaDAO = new CitaDAO();
-        consultaDAO = new ConsultaDAO();
+        presenter = new ConsultaPresenter(this);
         citasList = FXCollections.observableArrayList();
         cbCitasPendientes.setItems(citasList);
 
-        btnCargar.setOnAction(e -> seleccionarCita());
-        btnGuardar.setOnAction(e -> guardarConsulta());
-        btnSolicitarExamen.setOnAction(e -> solicitarExamen());
-        btnRecetar.setOnAction(e -> recetarMedicamento());
+        btnCargar.setOnAction(e -> presenter.seleccionarCita());
+        btnGuardar.setOnAction(e -> presenter.registrarConsulta());
+        btnSolicitarExamen.setOnAction(e -> presenter.solicitarExamen());
+        btnRecetar.setOnAction(e -> presenter.recetarMedicamento());
 
-        cargarCitas();
+        presenter.cargarCitasPendientes();
     }
 
-    private void cargarCitas() {
-        List<Cita> citas = citaDAO.obtenerCitasPorEstadoConNombres("PROGRAMADA");
+    @Override
+    public int getIdCitaSeleccionada() {
+        return idCitaSeleccionada;
+    }
+
+    @Override
+    public String getDiagnostico() {
+        return txtDiagnostico.getText();
+    }
+
+    @Override
+    public String getSintomas() {
+        return txtSintomas.getText();
+    }
+
+    @Override
+    public String getTratamiento() {
+        return txtTratamiento.getText();
+    }
+
+    @Override
+    public void mostrarCitasPendientes(List<Cita> citas) {
         citasList.clear();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         for (Cita c : citas) {
@@ -64,63 +69,58 @@ public class ConsultaController {
         }
         if (citasList.isEmpty()) {
             cbCitasPendientes.setPromptText("No hay citas pendientes");
+        } else {
+            cbCitasPendientes.getSelectionModel().selectFirst();
         }
     }
 
-    private void seleccionarCita() {
-        if (cbCitasPendientes.getSelectionModel().isEmpty()) {
-            mostrarAlerta("Error", "Seleccione una cita", Alert.AlertType.ERROR);
-            return;
-        }
-        String selected = cbCitasPendientes.getValue();
-        idCitaSeleccionada = Integer.parseInt(selected.split(" - ")[0]);
-        idConsultaActual = -1;
+    @Override
+    public void mostrarError(String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
+    }
+
+    @Override
+    public void mostrarExito(String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Éxito");
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
+    }
+
+    @Override
+    public void limpiarFormulario() {
         txtSintomas.clear();
         txtDiagnostico.clear();
         txtTratamiento.clear();
-        mostrarAlerta("Éxito", "Cita cargada, ingrese los datos de la consulta", Alert.AlertType.INFORMATION);
     }
 
-    private void guardarConsulta() {
-        if (idCitaSeleccionada == -1) {
-            mostrarAlerta("Error", "Seleccione una cita primero", Alert.AlertType.ERROR);
-            return;
-        }
-        String sintomas = txtSintomas.getText().trim();
-        String diagnostico = txtDiagnostico.getText().trim();
-        String tratamiento = txtTratamiento.getText().trim();
-
-        if (sintomas.isEmpty() || diagnostico.isEmpty()) {
-            mostrarAlerta("Error", "Síntomas y diagnóstico son obligatorios", Alert.AlertType.ERROR);
-            return;
-        }
-
-        Consulta consulta = new Consulta(idCitaSeleccionada, diagnostico, sintomas, tratamiento, false);
-        int idConsulta = consultaDAO.insertarConsultaYActualizarEstado(consulta);
-        if (idConsulta > 0) {
-            idConsultaActual = idConsulta;
-            mostrarAlerta("Éxito", "Consulta registrada correctamente", Alert.AlertType.INFORMATION);
-            btnGuardar.setDisable(true);
-            cargarCitas();
-        } else {
-            mostrarAlerta("Error", "No se pudo registrar la consulta", Alert.AlertType.ERROR);
-        }
+    @Override
+    public void limpiarSeleccionCita() {
+        idCitaSeleccionada = -1;
+        cbCitasPendientes.getSelectionModel().clearSelection();
     }
 
-    private void solicitarExamen() {
-        if (idConsultaActual <= 0) {
-            mostrarAlerta("Error", "Primero guarde la consulta", Alert.AlertType.ERROR);
-            return;
-        }
+    @Override
+    public void actualizarEstadoAcciones(boolean consultaGuardada) {
+        btnGuardar.setDisable(consultaGuardada);
+        btnSolicitarExamen.setDisable(!consultaGuardada);
+        btnRecetar.setDisable(!consultaGuardada);
+    }
+
+    @Override
+    public Integer solicitarExamen(List<ExamenLaboratorio> examenesDisponibles) {
+        ComboBox<ExamenLaboratorio> cbExamenes = new ComboBox<>();
+        cbExamenes.setPrefWidth(350);
+        cbExamenes.getItems().setAll(examenesDisponibles);
 
         Dialog<Integer> dialog = new Dialog<>();
         dialog.setTitle("Solicitar examen");
         dialog.setHeaderText("Seleccione el examen de laboratorio");
-
-        ComboBox<ExamenLaboratorio> cbExamenes = new ComboBox<>();
-        cbExamenes.setPrefWidth(350);
-        ExamenLaboratorioDAO examenDAO = new ExamenLaboratorioDAO();
-        cbExamenes.getItems().setAll(examenDAO.listarTodos());
 
         VBox content = new VBox(10, new Label("Examen:"), cbExamenes);
         content.setStyle("-fx-padding: 15;");
@@ -135,36 +135,14 @@ public class ConsultaController {
             return null;
         });
 
-        dialog.showAndWait().ifPresent(idExamen -> {
-            SolicitudExamen solicitud = new SolicitudExamen(idConsultaActual, idExamen);
-            try (Connection conn = DatabaseConnection.getConnection()) {
-                SolicitudExamenDAO solicitudDAO = new SolicitudExamenDAO();
-                if (solicitudDAO.insertar(solicitud, conn)) {
-                    mostrarAlerta("Éxito", "Examen solicitado correctamente", Alert.AlertType.INFORMATION);
-                } else {
-                    mostrarAlerta("Error", "No se pudo solicitar el examen", Alert.AlertType.ERROR);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                mostrarAlerta("Error", "Error de base de datos", Alert.AlertType.ERROR);
-            }
-        });
+        return dialog.showAndWait().orElse(null);
     }
 
-    private void recetarMedicamento() {
-        if (idConsultaActual <= 0) {
-            mostrarAlerta("Error", "Primero guarde la consulta", Alert.AlertType.ERROR);
-            return;
-        }
-
-        Dialog<int[]> dialog = new Dialog<>();
-        dialog.setTitle("Recetar medicamento");
-        dialog.setHeaderText("Seleccione medicamento, cantidad e indicaciones");
-
+    @Override
+    public RecetaRequest solicitarReceta(List<Medicamento> medicamentosDisponibles) {
         ComboBox<Medicamento> cbMedicamentos = new ComboBox<>();
         cbMedicamentos.setPrefWidth(350);
-        MedicamentoDAO medicamentoDAO = new MedicamentoDAO();
-        cbMedicamentos.getItems().setAll(medicamentoDAO.listarTodos());
+        cbMedicamentos.getItems().setAll(medicamentosDisponibles);
 
         Spinner<Integer> spCantidad = new Spinner<>(1, 100, 1);
         spCantidad.setEditable(true);
@@ -183,6 +161,9 @@ public class ConsultaController {
         grid.add(new Label("Indicaciones:"), 0, 2);
         grid.add(txtDosis, 1, 2);
 
+        Dialog<RecetaRequest> dialog = new Dialog<>();
+        dialog.setTitle("Recetar medicamento");
+        dialog.setHeaderText("Seleccione medicamento, cantidad e indicaciones");
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
@@ -190,67 +171,12 @@ public class ConsultaController {
             if (btn == ButtonType.OK) {
                 Medicamento med = cbMedicamentos.getValue();
                 if (med != null) {
-                    return new int[]{med.getIdMedicamento(), spCantidad.getValue()};
+                    return new RecetaRequest(med.getIdMedicamento(), spCantidad.getValue(), txtDosis.getText().trim());
                 }
             }
             return null;
         });
 
-        dialog.showAndWait().ifPresent(data -> {
-            int idMedicamento = data[0];
-            int cantidad = data[1];
-            String dosis = txtDosis.getText().trim();
-
-            Connection conn = null;
-            try {
-                conn = DatabaseConnection.getConnection();
-                conn.setAutoCommit(false);
-
-                Receta receta = new Receta(idConsultaActual, dosis);
-                RecetaDAO recetaDAO = new RecetaDAO();
-                int idReceta = recetaDAO.insertar(receta, conn);
-
-                if (idReceta > 0) {
-                    DetalleReceta detalle = new DetalleReceta(idReceta, idMedicamento, cantidad, dosis);
-                    DetalleRecetaDAO detalleDAO = new DetalleRecetaDAO();
-                    if (detalleDAO.insertar(detalle, conn)) {
-                        conn.commit();
-                        mostrarAlerta("Éxito", "Medicamento recetado correctamente", Alert.AlertType.INFORMATION);
-                    } else {
-                        conn.rollback();
-                        mostrarAlerta("Error", "No se pudo registrar el detalle", Alert.AlertType.ERROR);
-                    }
-                } else {
-                    conn.rollback();
-                    mostrarAlerta("Error", "No se pudo crear la receta", Alert.AlertType.ERROR);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                if (conn != null) try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-                mostrarAlerta("Error", "Error de base de datos", Alert.AlertType.ERROR);
-            } finally {
-                if (conn != null) {
-                    try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
-                }
-            }
-        });
-    }
-
-    private void limpiarCampos() {
-        txtSintomas.clear();
-        txtDiagnostico.clear();
-        txtTratamiento.clear();
-        idCitaSeleccionada = -1;
-        idConsultaActual = -1;
-        btnGuardar.setDisable(false);
-        cbCitasPendientes.getSelectionModel().clearSelection();
-    }
-
-    private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
-        Alert alert = new Alert(tipo);
-        alert.setTitle(titulo);
-        alert.setHeaderText(null);
-        alert.setContentText(mensaje);
-        alert.showAndWait();
+        return dialog.showAndWait().orElse(null);
     }
 }

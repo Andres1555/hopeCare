@@ -57,6 +57,25 @@ public class CitaConsoleView implements ICitaView {
     }
 
     @Override
+    public void mostrarDiasDisponibles(List<Integer> diasSemana) {
+        if (diasSemana.isEmpty()) {
+            System.out.println("El médico no tiene días de atención configurados.");
+            return;
+        }
+        String[] nombres = {"", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+        System.out.println("Días disponibles del médico:");
+        for (int d : diasSemana) {
+            System.out.println(" - " + nombres[d]);
+        }
+    }
+
+    @Override
+    public int getDiaSeleccionado() {
+        System.out.print("Ingrese día de la semana (1=Lunes...7=Domingo): ");
+        return Integer.parseInt(scanner.nextLine());
+    }
+
+    @Override
     public LocalTime getHoraSeleccionada() {
         if (ultimosHorarios == null || ultimosHorarios.isEmpty()) {
             System.out.print("Hora (HH:MM): ");

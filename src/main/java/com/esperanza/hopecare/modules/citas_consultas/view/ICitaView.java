@@ -4,12 +4,10 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-/**
- * Interfaz que define los métodos que debe implementar cualquier vista
- * (Swing, JavaFX, consola) para gestionar citas.
- */
 public interface ICitaView {
     void mostrarHorariosDisponibles(List<LocalTime> bloques);
+    void mostrarDiasDisponibles(List<Integer> diasSemana);
+    int getDiaSeleccionado();
     void mostrarMensajeError(String mensaje);
     void mostrarMensajeExito(String mensaje);
     void limpiarCampos();

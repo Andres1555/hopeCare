@@ -43,7 +43,7 @@ public class ConsultaPresenter {
     }
 
     public void cargarCitasPendientes() {
-        List<Cita> citas = citaDAO.obtenerCitasPorEstado("PROGRAMADA");
+        List<Cita> citas = citaDAO.obtenerCitasPorEstadoConNombres("PROGRAMADA");
         view.mostrarCitasPendientes(citas);
         view.actualizarEstadoAcciones(false);
     }
@@ -59,6 +59,7 @@ public class ConsultaPresenter {
         view.actualizarEstadoAcciones(false);
         view.mostrarExito("Cita cargada, puede registrar la consulta.");
     }
+
     public void registrarConsulta() {
         int idCita = view.getIdCitaSeleccionada();
         String diagnostico = limpiarTexto(view.getDiagnostico());
@@ -74,7 +75,6 @@ public class ConsultaPresenter {
             return;
         }
         Consulta consulta = new Consulta(idCita, diagnostico, sintomas, tratamiento, false);
-        // Ejecutar transacción: insertar consulta y actualizar estado de cita
         int idConsulta = consultaDAO.insertarConsultaYActualizarEstado(consulta);
         if (idConsulta > 0) {
             idConsultaActual = idConsulta;

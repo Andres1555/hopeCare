@@ -109,7 +109,8 @@ com.esperanza.hopecare
 │   │   ├── model (Persona, Medico, Paciente, Especialidad)
 │   │   ├── dao
 │   │   │   ├── MedicoDAO.java               (insertarMedico, listarTodos con JOIN)
-│   │   │   └── PacienteDAO.java             (listarTodos con JOIN a persona)
+│   │   │   ├── PacienteDAO.java             (listarTodos con JOIN a persona)
+│   │   │   └── EspecialidadDAO.java         (listarTodas)
 │   │   └── service
 │   ├── medicamentos_lab                     (Fachada)
 │   │   ├── model (Medicamento, Receta, DetalleReceta, EntregaMedicamento,
@@ -237,17 +238,19 @@ Principales tablas (script completo en sisgeho_schema.sql):
 - ConsultaDAO.insertarConsultaYActualizarEstado(): Transacción que inserta
   en consulta y cambia cita.estado a 'ATENDIDA' con commit/rollback.
 - CitasController (JavaFX): Implementa ICitaView con dos TableViews (Pacientes
-  y Médicos) para selección visual, DatePicker y ComboBox de horarios. Carga
-  datos desde PacienteDAO.listarTodos() y MedicoDAO.listarTodos(). Diseño
-  responsivo: tablas lado a lado (HBox) en pantallas ≥750px, apiladas
-  verticalmente (VBox) en pantallas más angostas. Tablas con
-  CONSTRAINED_RESIZE_POLICY para que las columnas se ajusten al ancho.
+  y Médicos) apiladas verticalmente. Incluye ComboBox de especialidad y TextField
+  de búsqueda por nombre para filtrar médicos. Al seleccionar médico, carga los
+  días disponibles desde HorarioAtencionDAO.obtenerHorariosPorMedico() y los
+  muestra en un ComboBox. Al seleccionar día, asigna automáticamente la fecha
+  (próxima ocurrencia de ese día). DatePicker y ComboBox de horarios completan
+  el formulario de reserva.
 - CitasPanel (Swing): Implementación alternativa de ICitaView en Swing (usa
   TextFields).
-- ConsultaController (JavaFX): Controlador standalone con ComboBox de citas
-  pendientes que muestra nombres reales de pacientes y médicos, TextArea para
+- ConsultaController (JavaFX): Implementa IConsultaView y delega toda la lógica
+  de negocio a ConsultaPresenter (MVP completo). ComboBox de citas pendientes
+  que muestra nombres reales de pacientes y médicos, TextArea para
   síntomas/diagnóstico/tratamiento, y diálogos modales (Dialog) para
-  solicitarExamen y recetarMedicamento.
+  solicitarExamen (devuelve Integer) y recetarMedicamento (devuelve RecetaRequest).
 - IConsultaView.RecetaRequest: Clase interna anidada para transportar datos
   de receta (idMedicamento, cantidad, dosis) desde la vista al presentador.
 - FacturacionService.generarFactura(): Reúne conceptos pendientes, calcula
@@ -312,14 +315,20 @@ LO COMPLETADO:
 - Diálogos de "Solicitar examen" y "Recetar medicamento" implementados en
   ConsultaController con transaccionalidad explícita (commit/rollback).
 - Todas las clases DAO, modelos, servicios, fachada y DTOs.
-- Modelos Persona (con nombre/apellido), Medico (con nombreEspecialidad) y
-  Paciente (nuevo). DAOs con listarTodos() que hacen JOIN a persona.
+- Modelos Persona (con nombre/apellido), Medico (con nombreEspecialidad),
+  Paciente y Especialidad. DAOs con listarTodos() que hacen JOIN a persona.
 - Controladores JavaFX y archivos FXML para todos los módulos.
 - EventBus y eventos funcionando (NuevaCitaEvent, NuevaFacturaEvent).
 - Base de datos se crea y puebla automáticamente al iniciar la app
   (HopecareApp.init() verifica la BD, ejecuta schema.sql e inserta datos
   de prueba con 5 pacientes, 3 médicos y 10 citas).
 - La aplicación se lanza desde HopecareApp (mvn javafx:run).
+- Flujo de citas mejorado: búsqueda de médicos por nombre, filtro por
+  especialidad (ComboBox), layout siempre vertical, selección de días
+  disponibles del médico con auto-asignación de fecha próxima.
+- ConsultaController ahora implementa IConsultaView con MVP completo
+  (delega en ConsultaPresenter), con diálogos modales que devuelven
+  Integer (examen) y RecetaRequest (receta).
 
 PENDIENTES / PRÓXIMOS PASOS:
 - Integrar completamente el login con roles (actualmente se pasa rol fijo

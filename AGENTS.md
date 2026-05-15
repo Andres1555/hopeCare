@@ -27,7 +27,7 @@
 | Ruta | Propósito |
 |------|-----------|
 | `modules/citas_consultas/` | Models, DAOs, Presenters (MVP) para citas y consultas |
-| `modules/pacientes_medicos/` | Models (Persona, Medico, Paciente) y DAOs para pacientes y médicos |
+| `modules/pacientes_medicos/` | Models (Persona, Medico, Paciente, Especialidad) y DAOs para pacientes y médicos (MedicoDAO, PacienteDAO, EspecialidadDAO) |
 | `modules/medicamentos_lab/` | Models, DAOs, Services, Facade para farmacia y laboratorio |
 | `modules/facturacion/` | Service, DTOs, DAOs para facturación |
 | `modules/dashboard/` | Observer pattern, DashboardDAO |
@@ -125,20 +125,15 @@ La navegación se maneja desde `MainController.java`:
 - `laboratorio.fxml` / `LaboratorioController.java` - Completo
 - `dashboard.fxml` - Estilo visual actualizado (lógica existente)
 
-## Últimos Cambios (Selección visual + datos + auto-init BD)
-- `Persona.java` - Se agregaron campos `nombre` y `apellido`
-- `Medico.java` - Se agregó campo `nombreEspecialidad` para mostrar especialidad en tablas
-- `MedicoDAO.java` - Nuevo método `listarTodos()` con JOIN a persona y especialidad (fix: `e.nombre AS nombre_especialidad`)
-- `Paciente.java` (nuevo) - Modelo con idPaciente, historiaClinica, extiende Persona
-- `PacienteDAO.java` (nuevo) - Método `listarTodos()` con JOIN a persona
-- `Cita.java` - Agregados campos `pacienteNombre` y `medicoNombre` (para display en consultas)
-- `CitaDAO.java` - Nuevo método `obtenerCitasPorEstadoConNombres()` con JOIN a persona
-- `citas.fxml` - TextFields de ID reemplazados por dos TableViews (Pacientes, Médicos)
-- `CitasController.java` - Ahora usa selección por tabla en lugar de IDs manuales
-- `ConsultaController.java` - Muestra nombres de paciente/médico en lugar de solo IDs
-- `CargarDatosPrueba.java` - Reescrito: 5 pacientes, 3 médicos, 10 citas, datos realistas con nombre/apellido
-- `HopecareApp.java` - Inicialización automática de BD en `init()` (crea schema + pobla datos al primer inicio) + migración de columnas faltantes con ALTER TABLE
-- `sisgeho_schema.sql` - Agregadas columnas `tipo_persona/nombre/apellido` en persona y `activo` en medico
-- `citas.fxml` - Diseño responsivo: CONSTRAINED_RESIZE_POLICY en tablas + fx:id en contenedores para toggle HBox/VBox
-- `CitasController.java` - Ajuste automático de layout: tablas lado a lado (>750px) o apiladas (<750px)
-- `module-info.java` - Abierto `common.model` a `javafx.base`
+## Últimos Cambios (Filtros + layout vertical + MVP completo en consultas)
+- `Especialidad.java` (nuevo) - Modelo para la tabla especialidad (idEspecialidad, nombre)
+- `EspecialidadDAO.java` (nuevo) - DAO con `listarTodas()` para cargar especialidades en ComboBox
+- `HorarioAtencionDAO.java` - Nuevo método `obtenerHorariosPorMedico(int)` que retorna todos los horarios de un médico (todos los días)
+- `ICitaView.java` - Nuevos métodos `mostrarDiasDisponibles(List<Integer>)` y `getDiaSeleccionado()` para el flujo de selección de día
+- `CitaPresenter.java` - Nuevo método `cargarDiasDisponibles(int idMedico)` que consulta horario_atencion y muestra los días disponibles
+- `citas.fxml` - Rediseño completo: layout vertical fijo (tablas una abajo de otra), nuevo ComboBox de especialidad, TextField de búsqueda por nombre, ComboBox de días disponibles, eliminada lógica responsive HBox/VBox
+- `CitasController.java` - Rewrite: buscador de médicos por nombre, filtro por especialidad (ComboBox), auto-asignación de fecha al seleccionar día disponible, siempre layout vertical
+- `CitaConsoleView.java` - Implementados stubs de `mostrarDiasDisponibles` y `getDiaSeleccionado`
+- `CitasPanel.java` (Swing) - Implementados stubs de `mostrarDiasDisponibles` y `getDiaSeleccionado`
+- `ConsultaPresenter.java` - Cambiado a `obtenerCitasPorEstadoConNombres()` para mostrar nombres paciente/médico en ComboBox
+- `ConsultaController.java` - Ahora implementa `IConsultaView` y delega toda la lógica de negocio a `ConsultaPresenter` (MVP completo)

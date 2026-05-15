@@ -124,6 +124,16 @@ public class CitasPanel extends JPanel implements ICitaView {
     }
     
     @Override
+    public void mostrarDiasDisponibles(List<Integer> diasSemana) {
+        // No implementado en Swing legacy
+    }
+
+    @Override
+    public int getDiaSeleccionado() {
+        return -1; // No implementado en Swing legacy
+    }
+
+    @Override
     public LocalTime getHoraSeleccionada() {
         String selected = (String) cbHorarios.getSelectedItem();
         return LocalTime.parse(selected);
