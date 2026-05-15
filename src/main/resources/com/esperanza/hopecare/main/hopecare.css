@@ -147,6 +147,54 @@
     -fx-background-color: transparent;
 }
 
+/* Inner tabs (inside module tabs) */
+.inner-tabs {
+    -fx-background-color: transparent;
+    -fx-tab-alignment: center;
+    -fx-tab-min-height: 40;
+    -fx-tab-max-height: 40;
+}
+
+.inner-tabs .tab-header-area {
+    -fx-padding: 8 16 0 16;
+    -fx-background-color: #ffffff;
+}
+
+.inner-tabs .tab-header-background {
+    -fx-background-color: #ffffff;
+}
+
+.inner-tabs .tab {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-padding: 8 20;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.inner-tabs .tab:selected {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #0d9488 transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.inner-tabs .tab-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #64748b;
+}
+
+.inner-tabs .tab:selected .tab-label {
+    -fx-text-fill: #0d9488;
+    -fx-font-weight: 600;
+}
+
+.inner-tabs .tab-content-area {
+    -fx-background-color: #f8fafc;
+}
+
 /* Card Styles */
 .card {
     -fx-background-color: #ffffff;

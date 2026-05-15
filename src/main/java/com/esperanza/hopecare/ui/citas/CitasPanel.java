@@ -1,5 +1,6 @@
 package com.esperanza.hopecare.ui.citas;
 
+import com.esperanza.hopecare.modules.citas_consultas.model.Cita;
 import com.esperanza.hopecare.modules.citas_consultas.presenter.CitaPresenter;
 import com.esperanza.hopecare.modules.citas_consultas.view.ICitaView;
 import javax.swing.*;
@@ -71,6 +72,9 @@ public class CitasPanel extends JPanel implements ICitaView {
     }
     
     @Override
+    public void mostrarCitasExistentes(List<Cita> citas) {}
+
+    @Override
     public void mostrarHorariosDisponibles(List<LocalTime> bloques) {
         horariosActuales = bloques;
         cbHorarios.removeAllItems();
@@ -123,6 +127,16 @@ public class CitasPanel extends JPanel implements ICitaView {
         return LocalDate.parse(txtFecha.getText());
     }
     
+    @Override
+    public void mostrarDiasDisponibles(List<Integer> diasSemana) {
+        // No implementado en Swing legacy
+    }
+
+    @Override
+    public int getDiaSeleccionado() {
+        return -1; // No implementado en Swing legacy
+    }
+
     @Override
     public LocalTime getHoraSeleccionada() {
         String selected = (String) cbHorarios.getSelectedItem();

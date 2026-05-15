@@ -12,8 +12,37 @@ package com.esperanza.hopecare.modules.pacientes_medicos.dao;
 import com.esperanza.hopecare.modules.pacientes_medicos.model.Medico;
 import com.esperanza.hopecare.common.db.DatabaseConnection;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MedicoDAO {
+
+    public List<Medico> listarTodos() {
+        List<Medico> lista = new ArrayList<>();
+        String sql = "SELECT m.id_medico, m.id_persona, m.id_especialidad, m.registro_medico, "
+                   + "p.nombre, p.apellido, p.documento_identidad, e.nombre AS nombre_especialidad "
+                   + "FROM medico m "
+                   + "JOIN persona p ON m.id_persona = p.id_persona "
+                   + "JOIN especialidad e ON m.id_especialidad = e.id_especialidad "
+                   + "WHERE m.activo = 1";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Medico m = new Medico();
+                m.setIdMedico(rs.getInt("id_medico"));
+                m.setIdPersona(rs.getInt("id_persona"));
+                m.setIdEspecialidad(rs.getInt("id_especialidad"));
+                m.setRegistroMedico(rs.getString("registro_medico"));
+                m.setNombre(rs.getString("nombre"));
+                m.setApellido(rs.getString("apellido"));
+                m.setDocumentoIdentidad(rs.getString("documento_identidad"));
+                m.setNombreEspecialidad(rs.getString("nombre_especialidad"));
+                lista.add(m);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return lista;
+    }
 
     /**
      * Inserta un médico de forma transaccional:

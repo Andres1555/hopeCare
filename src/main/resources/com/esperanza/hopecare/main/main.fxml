@@ -63,7 +63,14 @@
                 <fx:include source="../registro/view/registro_medico.fxml"/>
             </Tab>
             <Tab fx:id="tabCitas" text="" closable="false">
-                <fx:include source="../citas/view/citas.fxml"/>
+                <TabPane tabClosingPolicy="UNAVAILABLE" styleClass="inner-tabs">
+                    <Tab text="Agendar Cita" closable="false">
+                        <fx:include source="../citas/view/citas.fxml"/>
+                    </Tab>
+                    <Tab text="Registrar Consulta" closable="false">
+                        <fx:include source="../consulta/view/consulta.fxml"/>
+                    </Tab>
+                </TabPane>
             </Tab>
             <Tab fx:id="tabFarmacia" text="" closable="false">
                 <fx:include source="../farmacia/view/farmacia.fxml"/>

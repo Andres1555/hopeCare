@@ -1,5 +1,6 @@
 package com.esperanza.hopecare.modules.citas_consultas.view.impl;
 
+import com.esperanza.hopecare.modules.citas_consultas.model.Cita;
 import com.esperanza.hopecare.modules.citas_consultas.view.ICitaView;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -9,6 +10,14 @@ import java.util.Scanner;
 public class CitaConsoleView implements ICitaView {
     private Scanner scanner = new Scanner(System.in);
     private List<LocalTime> ultimosHorarios;
+
+    @Override
+    public void mostrarCitasExistentes(List<Cita> citas) {
+        System.out.println("=== CITAS EXISTENTES ===");
+        for (Cita c : citas) {
+            System.out.println(c.getIdCita() + " | " + c.getPacienteNombre() + " | " + c.getMedicoNombre() + " | " + c.getFechaHora() + " | " + c.getEstado());
+        }
+    }
 
     @Override
     public void mostrarHorariosDisponibles(List<LocalTime> bloques) {
@@ -54,6 +63,25 @@ public class CitaConsoleView implements ICitaView {
     public LocalDate getFechaSeleccionada() {
         System.out.print("Fecha (YYYY-MM-DD): ");
         return LocalDate.parse(scanner.nextLine());
+    }
+
+    @Override
+    public void mostrarDiasDisponibles(List<Integer> diasSemana) {
+        if (diasSemana.isEmpty()) {
+            System.out.println("El médico no tiene días de atención configurados.");
+            return;
+        }
+        String[] nombres = {"", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+        System.out.println("Días disponibles del médico:");
+        for (int d : diasSemana) {
+            System.out.println(" - " + nombres[d]);
+        }
+    }
+
+    @Override
+    public int getDiaSeleccionado() {
+        System.out.print("Ingrese día de la semana (1=Lunes...7=Domingo): ");
+        return Integer.parseInt(scanner.nextLine());
     }
 
     @Override
