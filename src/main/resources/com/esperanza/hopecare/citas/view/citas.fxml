@@ -11,30 +11,32 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="15" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esperanza.hopecare.citas.view.CitasController">
+<VBox fx:id="root" spacing="15" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esperanza.hopecare.citas.view.CitasController">
     <padding>
         <Insets top="20" right="20" bottom="20" left="20" />
     </padding>
 
-    <HBox spacing="20">
-        <VBox spacing="5" HBox.hgrow="ALWAYS">
+    <HBox fx:id="tablasContainer" spacing="20">
+        <VBox fx:id="panelPacientes" spacing="5" HBox.hgrow="ALWAYS">
             <Label text="Pacientes disponibles:" style="-fx-font-weight: bold;" />
             <TableView fx:id="tvPacientes" prefHeight="200">
+                <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY" /></columnResizePolicy>
                 <columns>
-                    <TableColumn text="ID" prefWidth="50" />
-                    <TableColumn text="Nombre" prefWidth="180" />
-                    <TableColumn text="Documento" prefWidth="120" />
+                    <TableColumn text="ID" prefWidth="-1" />
+                    <TableColumn text="Nombre" prefWidth="-1" />
+                    <TableColumn text="Documento" prefWidth="-1" />
                 </columns>
             </TableView>
         </VBox>
-        <VBox spacing="5" HBox.hgrow="ALWAYS">
+        <VBox fx:id="panelMedicos" spacing="5" HBox.hgrow="ALWAYS">
             <Label text="Médicos disponibles:" style="-fx-font-weight: bold;" />
             <TableView fx:id="tvMedicos" prefHeight="200">
+                <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY" /></columnResizePolicy>
                 <columns>
-                    <TableColumn text="ID" prefWidth="50" />
-                    <TableColumn text="Nombre" prefWidth="180" />
-                    <TableColumn text="Especialidad" prefWidth="120" />
-                    <TableColumn text="Registro" prefWidth="100" />
+                    <TableColumn text="ID" prefWidth="-1" />
+                    <TableColumn text="Nombre" prefWidth="-1" />
+                    <TableColumn text="Especialidad" prefWidth="-1" />
+                    <TableColumn text="Registro" prefWidth="-1" />
                 </columns>
             </TableView>
         </VBox>

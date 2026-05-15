@@ -13,11 +13,17 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
 public class CitasController implements ICitaView {
+    @FXML private VBox root;
+    @FXML private HBox tablasContainer;
+    @FXML private VBox panelPacientes;
+    @FXML private VBox panelMedicos;
     @FXML private TableView<Paciente> tvPacientes;
     @FXML private TableView<Medico> tvMedicos;
     @FXML private DatePicker dpFecha;
@@ -31,6 +37,7 @@ public class CitasController implements ICitaView {
     private int idMedicoSeleccionado = -1;
     private ObservableList<Paciente> pacientesList;
     private ObservableList<Medico> medicosList;
+    private static final double UMBRAL_ANCHO = 750;
 
     @FXML
     public void initialize() {
@@ -44,7 +51,27 @@ public class CitasController implements ICitaView {
         cbHorarios.setDisable(true);
         btnReservar.setDisable(true);
 
+        root.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.widthProperty().addListener((o, oldW, newW) -> ajustarLayout(newW.doubleValue()));
+                ajustarLayout(newScene.getWidth());
+            }
+        });
+
         cargarDatos();
+    }
+
+    private void ajustarLayout(double ancho) {
+        boolean esAngosto = ancho < UMBRAL_ANCHO;
+        tablasContainer.getChildren().clear();
+        if (esAngosto) {
+            VBox vbox = new VBox(10, panelPacientes, panelMedicos);
+            VBox.setVgrow(panelPacientes, javafx.scene.layout.Priority.ALWAYS);
+            VBox.setVgrow(panelMedicos, javafx.scene.layout.Priority.ALWAYS);
+            tablasContainer.getChildren().add(vbox);
+        } else {
+            tablasContainer.getChildren().addAll(panelPacientes, panelMedicos);
+        }
     }
 
     private void configurarTablaPacientes() {
