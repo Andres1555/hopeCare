@@ -17,12 +17,14 @@ public class GestionClinicaFacade {
     private MedicamentoDAO medicamentoDAO;
     private EntregaMedicamentoDAO entregaDAO;
     private SolicitudExamenDAO solicitudDAO;
+    private DetalleRecetaDAO detalleRecetaDAO;
     private RoleValidator roleValidator;
 
     public GestionClinicaFacade() {
         this.medicamentoDAO = new MedicamentoDAO();
         this.entregaDAO = new EntregaMedicamentoDAO();
         this.solicitudDAO = new SolicitudExamenDAO();
+        this.detalleRecetaDAO = new DetalleRecetaDAO();
         this.roleValidator = new RoleValidator();
     }
 
@@ -53,12 +55,25 @@ public class GestionClinicaFacade {
                 throw new RuntimeException("Stock insuficiente o medicamento no encontrado.");
             }
 
-            // 2. Registrar la entrega
-            EntregaMedicamento entrega = new EntregaMedicamento(0, idReceta, idMedicamento, cantidad);
+            // 2. Obtener el detalle_receta que vincula receta con medicamento
+            int idDetalleReceta = -1;
+            java.util.List<com.esperanza.hopecare.modules.medicamentos_lab.model.DetalleReceta> detalles = detalleRecetaDAO.listarPorReceta(idReceta);
+            for (com.esperanza.hopecare.modules.medicamentos_lab.model.DetalleReceta dr : detalles) {
+                if (dr.getIdMedicamento() == idMedicamento) {
+                    idDetalleReceta = dr.getIdDetalle();
+                    break;
+                }
+            }
+            if (idDetalleReceta <= 0) {
+                throw new RuntimeException("No se encontró el detalle de receta para el medicamento especificado.");
+            }
+
+            // 3. Registrar la entrega (entregado_por = 1 por defecto, pendiente de login)
+            EntregaMedicamento entrega = new EntregaMedicamento(idDetalleReceta, cantidad, 1);
             boolean okEntrega = entregaDAO.insertar(entrega, conn);
             if (!okEntrega) throw new RuntimeException("Error al registrar entrega.");
 
-            // 3. Actualizar stock (restar cantidad)
+            // 4. Actualizar stock (restar cantidad)
             int nuevoStock = med.getStockActual() - cantidad;
             boolean okStock = medicamentoDAO.actualizarStock(idMedicamento, nuevoStock, conn);
             if (!okStock) throw new RuntimeException("Error al actualizar stock.");
