@@ -57,6 +57,19 @@ public class FacturaDAO {
         return lista;
     }
 
+    public boolean actualizarEstadoPago(int idFactura, String nuevoEstado) {
+        String sql = "UPDATE factura SET estado_pago = ? WHERE id_factura = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nuevoEstado);
+            ps.setInt(2, idFactura);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public Set<Integer> obtenerIdsPacientesConPendientes() {
         Set<Integer> ids = new HashSet<>();
         String sql = "SELECT DISTINCT ci.id_paciente FROM consulta c JOIN cita ci ON c.id_cita = ci.id_cita WHERE ci.estado = 'ATENDIDA' AND c.facturado = 0 "

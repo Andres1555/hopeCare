@@ -11,8 +11,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 
 public class FacturacionController {
@@ -107,6 +109,26 @@ public class FacturacionController {
         colTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estadoPago"));
 
+        colEstado.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(item);
+                    if ("PAGADO".equals(item)) {
+                        setStyle("-fx-text-fill: #16a34a; -fx-font-weight: 600;");
+                    } else if ("ANULADO".equals(item)) {
+                        setStyle("-fx-text-fill: #dc2626; -fx-font-weight: 600;");
+                    } else {
+                        setStyle("-fx-text-fill: #f59e0b; -fx-font-weight: 600;");
+                    }
+                }
+            }
+        });
+
         colSubtotal.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
@@ -131,6 +153,56 @@ public class FacturacionController {
 
         facturasList = FXCollections.observableArrayList();
         tablaFacturas.setItems(facturasList);
+
+        tablaFacturas.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                FacturaResumenDTO factura = tablaFacturas.getSelectionModel().getSelectedItem();
+                if (factura != null) abrirDialogoEditarEstado(factura);
+            }
+        });
+    }
+
+    private void abrirDialogoEditarEstado(FacturaResumenDTO factura) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Cambiar estado de factura #" + factura.getIdFactura());
+        dialog.setHeaderText("Paciente: " + factura.getPacienteNombre());
+
+        ComboBox<String> cbEstado = new ComboBox<>();
+        cbEstado.getItems().addAll("PENDIENTE", "PAGADO", "ANULADO");
+        cbEstado.setValue(factura.getEstadoPago());
+        cbEstado.setPrefWidth(250);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(15));
+        grid.add(new Label("Estado de pago:"), 0, 0);
+        grid.add(cbEstado, 1, 0);
+
+        Button btnGuardar = new Button("Guardar");
+        btnGuardar.setOnAction(e -> {
+            String nuevoEstado = cbEstado.getValue();
+            if (nuevoEstado == null) return;
+            if (facturaDAO.actualizarEstadoPago(factura.getIdFactura(), nuevoEstado)) {
+                mostrarAlerta("Éxito", "Estado actualizado a " + nuevoEstado, Alert.AlertType.INFORMATION);
+                dialog.close();
+                cargarFacturas();
+            } else {
+                mostrarAlerta("Error", "No se pudo actualizar el estado.", Alert.AlertType.ERROR);
+            }
+        });
+
+        VBox content = new VBox(12, grid, btnGuardar);
+        content.setPadding(new Insets(15));
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
+        dialog.showAndWait();
+    }
+
+    public void refrescar() {
+        idsPacientesPendientes = facturaDAO.obtenerIdsPacientesConPendientes();
+        tablaPacientes.refresh();
+        cargarFacturas();
     }
 
     private void cargarFacturas() {

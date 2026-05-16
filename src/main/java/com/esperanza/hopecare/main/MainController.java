@@ -1,6 +1,8 @@
 package com.esperanza.hopecare.main;
 
+import com.esperanza.hopecare.facturacion.view.FacturacionController;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
@@ -16,9 +18,19 @@ public class MainController {
     @FXML private Tab tabFacturacion;
     @FXML private Label lblBreadcrumb;
 
+    private FacturacionController facturacionController;
+
     @FXML
     public void initialize() {
         mainTabPane.getSelectionModel().select(tabFarmacia);
+
+        Node facturaRoot = tabFacturacion.getContent();
+        if (facturaRoot != null) {
+            Object ctrl = facturaRoot.getProperties().get("controller");
+            if (ctrl instanceof FacturacionController) {
+                facturacionController = (FacturacionController) ctrl;
+            }
+        }
     }
 
     @FXML
@@ -55,5 +67,8 @@ public class MainController {
     private void navigateToFacturacion() {
         mainTabPane.getSelectionModel().select(tabFacturacion);
         lblBreadcrumb.setText("Inicio > Facturación");
+        if (facturacionController != null) {
+            facturacionController.refrescar();
+        }
     }
 }
