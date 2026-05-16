@@ -185,7 +185,7 @@ public class FarmaciaController {
         } else {
             String lowerFiltro = filtro.toLowerCase();
             medicamentoDAO.listarTodos().stream()
-                .filter(m -> m.getNombre().toLowerCase().contains(lowerFiltro))
+                .filter(m -> m.getNombreComercial().toLowerCase().contains(lowerFiltro))
                 .forEach(inventarioData::add);
         }
     }
@@ -268,7 +268,7 @@ public class FarmaciaController {
                 try {
                     int stock = Integer.parseInt(stockStr);
                     int stockMin = Integer.parseInt(stockMinStr);
-                    return new Medicamento(0, nombre, stock, stockMin);
+                    return new Medicamento(0, nombre, nombre, "Tabletas", "N/A", 0.0, stock, stockMin, false);
                 } catch (NumberFormatException e) {
                     mostrarAlerta("Error", "Los valores de stock deben ser numéricos", Alert.AlertType.ERROR);
                     return null;
@@ -297,7 +297,7 @@ public class FarmaciaController {
 
         Dialog<Integer> dialog = new Dialog<>();
         dialog.setTitle("Actualizar Stock");
-        dialog.setHeaderText("Nuevo stock para: " + selected.getNombre());
+        dialog.setHeaderText("Nuevo stock para: " + selected.getNombreComercial());
 
         TextField txtNuevoStock = new TextField();
         txtNuevoStock.setText(String.valueOf(selected.getStockActual()));

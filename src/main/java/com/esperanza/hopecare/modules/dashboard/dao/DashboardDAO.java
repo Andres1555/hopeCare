@@ -21,7 +21,7 @@ public class DashboardDAO {
     public double obtenerIngresosDelMes() {
         String sql = "SELECT COALESCE(SUM(total), 0) FROM factura " +
                      "WHERE strftime('%Y-%m', fecha_emision) = strftime('%Y-%m', 'now') " +
-                     "AND estado_pago = 'PAGADO'";  // asumiendo campo fecha_emision
+                     "AND estado_pago = 'PAGADO'";
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -32,11 +32,11 @@ public class DashboardDAO {
 
     public List<String> obtenerMedicamentosStockBajo() {
         List<String> lista = new ArrayList<>();
-        String sql = "SELECT nombre FROM medicamento WHERE stock_actual < stock_minimo"; // asumiendo columna stock_minimo
+        String sql = "SELECT nombre_comercial FROM medicamento WHERE stock_actual < stock_minimo";
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) lista.add(rs.getString("nombre"));
+            while (rs.next()) lista.add(rs.getString("nombre_comercial"));
         } catch (SQLException e) { e.printStackTrace(); }
         return lista;
     }

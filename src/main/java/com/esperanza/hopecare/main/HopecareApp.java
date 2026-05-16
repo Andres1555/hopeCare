@@ -49,8 +49,9 @@ public class HopecareApp extends Application {
                 com.esperanza.hopecare.common.db.CargarDatosPrueba.main(new String[]{});
             } else {
                 System.out.println("Base de datos existente. Verificando migraciones...");
-                migrarColumnas(stmt);
-
+                // Con el nuevo esquema completo, las migraciones anteriores ya no son necesarias
+                System.out.println("Migraciones anteriores no aplican con el nuevo esquema completo.");
+                
                 if (baseDatosVacia(stmt)) {
                     System.out.println("Insertando datos de prueba...");
                     com.esperanza.hopecare.common.db.CargarDatosPrueba.main(new String[]{});
@@ -83,19 +84,6 @@ public class HopecareApp extends Application {
     private boolean baseDatosVacia(Statement stmt) throws Exception {
         try (ResultSet rs = stmt.executeQuery("SELECT count(*) FROM persona")) {
             return rs.next() && rs.getInt(1) == 0;
-        }
-    }
-
-    private void migrarColumnas(Statement stmt) throws Exception {
-        if (!columnaExiste(stmt, "persona", "nombre")) {
-            System.out.println("Migrando: agregando nombre/apellido/tipo_persona a persona...");
-            stmt.execute("ALTER TABLE persona ADD COLUMN tipo_persona TEXT NOT NULL DEFAULT 'PACIENTE'");
-            stmt.execute("ALTER TABLE persona ADD COLUMN nombre TEXT NOT NULL DEFAULT 'Sin'");
-            stmt.execute("ALTER TABLE persona ADD COLUMN apellido TEXT NOT NULL DEFAULT 'Nombre'");
-        }
-        if (!columnaExiste(stmt, "medico", "activo")) {
-            System.out.println("Migrando: agregando activo a medico...");
-            stmt.execute("ALTER TABLE medico ADD COLUMN activo INTEGER DEFAULT 1");
         }
     }
 

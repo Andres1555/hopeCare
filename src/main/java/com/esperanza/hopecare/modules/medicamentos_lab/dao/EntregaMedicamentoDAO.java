@@ -9,11 +9,12 @@ import java.util.List;
 public class EntregaMedicamentoDAO {
 
     public boolean insertar(EntregaMedicamento entrega, Connection conn) throws SQLException {
-        String sql = "INSERT INTO entrega_medicamento (id_receta, id_medicamento, cantidad) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO entrega_medicamento (id_detalle_receta, cantidad_entregada, entregado_por, facturado) VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, entrega.getIdReceta());
-            ps.setInt(2, entrega.getIdMedicamento());
-            ps.setInt(3, entrega.getCantidad());
+            ps.setInt(1, entrega.getIdDetalleReceta());
+            ps.setInt(2, entrega.getCantidadEntregada());
+            ps.setInt(3, entrega.getEntregadoPor());
+            ps.setBoolean(4, entrega.isFacturado());
             return ps.executeUpdate() == 1;
         }
     }
@@ -28,7 +29,7 @@ public class EntregaMedicamentoDAO {
 
     public List<EntregaMedicamento> listarTodas() {
         List<EntregaMedicamento> lista = new ArrayList<>();
-        String sql = "SELECT id_entrega, id_receta, id_medicamento, cantidad, fecha_entrega, facturado FROM entrega_medicamento ORDER BY fecha_entrega DESC";
+        String sql = "SELECT id_entrega, id_detalle_receta, cantidad_entregada, entregado_por, facturado FROM entrega_medicamento ORDER BY fecha_entrega DESC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ResultSet rs = ps.executeQuery();
@@ -43,7 +44,7 @@ public class EntregaMedicamentoDAO {
 
     public List<EntregaMedicamento> listarPorReceta(int idReceta) {
         List<EntregaMedicamento> lista = new ArrayList<>();
-        String sql = "SELECT id_entrega, id_receta, id_medicamento, cantidad, fecha_entrega, facturado FROM entrega_medicamento WHERE id_receta = ? ORDER BY fecha_entrega DESC";
+        String sql = "SELECT id_entrega, id_detalle_receta, cantidad_entregada, entregado_por, facturado FROM entrega_medicamento WHERE id_detalle_receta = ? ORDER BY fecha_entrega DESC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idReceta);
@@ -60,14 +61,14 @@ public class EntregaMedicamentoDAO {
     private EntregaMedicamento mapear(ResultSet rs) throws SQLException {
         EntregaMedicamento e = new EntregaMedicamento();
         e.setIdEntrega(rs.getInt("id_entrega"));
-        e.setIdReceta(rs.getInt("id_receta"));
-        e.setIdMedicamento(rs.getInt("id_medicamento"));
-        e.setCantidad(rs.getInt("cantidad"));
+        e.setIdDetalleReceta(rs.getInt("id_detalle_receta"));
+        e.setCantidadEntregada(rs.getInt("cantidad_entregada"));
+        e.setEntregadoPor(rs.getInt("entregado_por"));
+        e.setFacturado(rs.getBoolean("facturado"));
         Timestamp ts = rs.getTimestamp("fecha_entrega");
         if (ts != null) {
             e.setFechaEntrega(ts.toLocalDateTime());
         }
-        e.setFacturado(rs.getBoolean("facturado"));
         return e;
     }
 }

@@ -14,7 +14,7 @@ import java.sql.Statement;
 public class AuthDAO {
 
     public UsuarioModel autenticar(String usuario, String contrasena) {
-        String sql = "SELECT u.id_usuario, u.nombre_usuario, r.nombre AS rol " +
+        String sql = "SELECT u.id_usuario, u.nombre_usuario, r.nombre_rol AS rol " +
                      "FROM usuario u " +
                      "JOIN rol r ON u.id_rol = r.id_rol " +
                      "WHERE u.nombre_usuario = ? AND u.contrasena_hash = ?";
@@ -86,7 +86,7 @@ public class AuthDAO {
 
     public int insertarUsuario(Connection conn, String username, String password, String rolNombre) throws SQLException {
         String sql = "INSERT INTO usuario (nombre_usuario, contrasena_hash, id_rol) " +
-                     "SELECT ?, ?, id_rol FROM rol WHERE nombre = ?";
+                     "SELECT ?, ?, id_rol FROM rol WHERE nombre_rol = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, username);
             ps.setString(2, Hasher.hash(password));

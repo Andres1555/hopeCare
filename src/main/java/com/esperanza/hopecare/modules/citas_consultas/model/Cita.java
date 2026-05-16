@@ -8,6 +8,9 @@ public class Cita {
     private int idMedico;
     private LocalDateTime fechaHora;
     private String estado;
+    private String motivo;
+    private int creadaPor;
+    private LocalDateTime fechaCreacion;
     private String pacienteNombre;
     private String medicoNombre;
 
@@ -30,6 +33,12 @@ public class Cita {
     public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+    public String getMotivo() { return motivo; }
+    public void setMotivo(String motivo) { this.motivo = motivo; }
+    public int getCreadaPor() { return creadaPor; }
+    public void setCreadaPor(int creadaPor) { this.creadaPor = creadaPor; }
+    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
     public String getPacienteNombre() { return pacienteNombre; }
     public void setPacienteNombre(String pacienteNombre) { this.pacienteNombre = pacienteNombre; }
     public String getMedicoNombre() { return medicoNombre; }

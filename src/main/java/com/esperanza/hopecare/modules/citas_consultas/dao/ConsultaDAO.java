@@ -7,7 +7,7 @@ import java.sql.*;
 public class ConsultaDAO {
 
     public int insertarConsultaYActualizarEstado(Consulta consulta) {
-        String sqlInsert = "INSERT INTO consulta (id_cita, diagnostico, sintomas, tratamiento, facturado) VALUES (?, ?, ?, ?, ?)";
+        String sqlInsert = "INSERT INTO consulta (id_cita, diagnostico, sintomas, tratamiento, notas_medicas, fecha_consulta, facturado) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String sqlUpdate = "UPDATE cita SET estado = 'ATENDIDA' WHERE id_cita = ?";
         Connection conn = null;
         PreparedStatement pstmtInsert = null;
@@ -21,7 +21,9 @@ public class ConsultaDAO {
             pstmtInsert.setString(2, consulta.getDiagnostico());
             pstmtInsert.setString(3, consulta.getSintomas());
             pstmtInsert.setString(4, consulta.getTratamiento());
-            pstmtInsert.setBoolean(5, consulta.isFacturado());
+            pstmtInsert.setString(5, consulta.getNotasMedicas());
+            pstmtInsert.setTimestamp(6, Timestamp.valueOf(consulta.getFechaConsulta()));
+            pstmtInsert.setBoolean(7, consulta.isFacturado());
             int affectedInsert = pstmtInsert.executeUpdate();
 
             pstmtUpdate = conn.prepareStatement(sqlUpdate);

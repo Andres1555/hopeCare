@@ -6,6 +6,7 @@ public class ExamenLaboratorio {
     private String descripcion;
     private double precio;
     private int tiempoResultadoHoras;
+    private byte[] resultadoArchivo;
 
     public ExamenLaboratorio() {}
 
@@ -32,6 +33,8 @@ public class ExamenLaboratorio {
     public void setPrecio(double precio) { this.precio = precio; }
     public int getTiempoResultadoHoras() { return tiempoResultadoHoras; }
     public void setTiempoResultadoHoras(int tiempoResultadoHoras) { this.tiempoResultadoHoras = tiempoResultadoHoras; }
+    public byte[] getResultadoArchivo() { return resultadoArchivo; }
+    public void setResultadoArchivo(byte[] resultadoArchivo) { this.resultadoArchivo = resultadoArchivo; }
 
     @Override
     public String toString() {

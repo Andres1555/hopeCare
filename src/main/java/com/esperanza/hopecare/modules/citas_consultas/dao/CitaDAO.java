@@ -41,7 +41,7 @@ public class CitaDAO {
 
     public List<Cita> obtenerCitasPorMedicoYFecha(int idMedico, LocalDate fecha) {
         List<Cita> citas = new ArrayList<>();
-        String sql = "SELECT id_cita, id_paciente, id_medico, fecha_hora, estado " +
+        String sql = "SELECT id_cita, id_paciente, id_medico, fecha_hora, estado, motivo, creada_por, fecha_creacion " +
                      "FROM cita WHERE id_medico = ? AND DATE(fecha_hora) = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -55,6 +55,12 @@ public class CitaDAO {
                 c.setIdMedico(rs.getInt("id_medico"));
                 c.setFechaHora(parseFechaHora(rs));
                 c.setEstado(rs.getString("estado"));
+                c.setMotivo(rs.getString("motivo"));
+                c.setCreadaPor(rs.getInt("creada_por"));
+                Timestamp ts = rs.getTimestamp("fecha_creacion");
+                if (ts != null) {
+                    c.setFechaCreacion(ts.toLocalDateTime());
+                }
                 citas.add(c);
             }
         } catch (SQLException e) { e.printStackTrace(); }
@@ -62,13 +68,16 @@ public class CitaDAO {
     }
     
     public boolean insertarCita(Cita cita) {
-        String sql = "INSERT INTO cita (id_paciente, id_medico, fecha_hora, estado) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO cita (id_paciente, id_medico, fecha_hora, estado, motivo, creada_por, fecha_creacion) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setInt(1, cita.getIdPaciente());
             pstmt.setInt(2, cita.getIdMedico());
             pstmt.setString(3, cita.getFechaHora().format(DT_FMT));
             pstmt.setString(4, cita.getEstado());
+            pstmt.setString(5, cita.getMotivo());
+            pstmt.setInt(6, cita.getCreadaPor());
+            pstmt.setTimestamp(7, Timestamp.valueOf(cita.getFechaCreacion()));
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
                 return false;
@@ -86,13 +95,16 @@ public class CitaDAO {
     }
     
     public boolean actualizarCita(Cita cita) {
-        String sql = "UPDATE cita SET id_medico = ?, fecha_hora = ?, estado = ? WHERE id_cita = ?";
+        String sql = "UPDATE cita SET id_medico = ?, fecha_hora = ?, estado = ?, motivo = ?, creada_por = ?, fecha_creacion = ? WHERE id_cita = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, cita.getIdMedico());
             pstmt.setString(2, cita.getFechaHora().format(DT_FMT));
             pstmt.setString(3, cita.getEstado());
-            pstmt.setInt(4, cita.getIdCita());
+            pstmt.setString(4, cita.getMotivo());
+            pstmt.setInt(5, cita.getCreadaPor());
+            pstmt.setTimestamp(6, Timestamp.valueOf(cita.getFechaCreacion()));
+            pstmt.setInt(7, cita.getIdCita());
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -116,7 +128,7 @@ public class CitaDAO {
 
     public List<Cita> obtenerCitasPorEstado(String estado) {
         List<Cita> citas = new ArrayList<>();
-        String sql = "SELECT id_cita, id_paciente, id_medico, fecha_hora, estado " +
+        String sql = "SELECT id_cita, id_paciente, id_medico, fecha_hora, estado, motivo, creada_por, fecha_creacion " +
                      "FROM cita WHERE estado = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -129,6 +141,12 @@ public class CitaDAO {
                 c.setIdMedico(rs.getInt("id_medico"));
                 c.setFechaHora(parseFechaHora(rs));
                 c.setEstado(rs.getString("estado"));
+                c.setMotivo(rs.getString("motivo"));
+                c.setCreadaPor(rs.getInt("creada_por"));
+                Timestamp ts = rs.getTimestamp("fecha_creacion");
+                if (ts != null) {
+                    c.setFechaCreacion(ts.toLocalDateTime());
+                }
                 citas.add(c);
             }
         } catch (SQLException e) { e.printStackTrace(); }
@@ -137,7 +155,7 @@ public class CitaDAO {
 
     public List<Cita> listarTodasConNombres() {
         List<Cita> citas = new ArrayList<>();
-        String sql = "SELECT c.id_cita, c.id_paciente, c.id_medico, c.fecha_hora, c.estado, "
+        String sql = "SELECT c.id_cita, c.id_paciente, c.id_medico, c.fecha_hora, c.estado, c.motivo, c.creada_por, c.fecha_creacion, "
                    + "pp.nombre AS p_nombre, pp.apellido AS p_apellido, "
                    + "pm.nombre AS m_nombre, pm.apellido AS m_apellido "
                    + "FROM cita c "
@@ -156,6 +174,12 @@ public class CitaDAO {
                 c.setIdMedico(rs.getInt("id_medico"));
                 c.setFechaHora(parseFechaHora(rs));
                 c.setEstado(rs.getString("estado"));
+                c.setMotivo(rs.getString("motivo"));
+                c.setCreadaPor(rs.getInt("creada_por"));
+                Timestamp ts = rs.getTimestamp("fecha_creacion");
+                if (ts != null) {
+                    c.setFechaCreacion(ts.toLocalDateTime());
+                }
                 c.setPacienteNombre(rs.getString("p_nombre") + " " + rs.getString("p_apellido"));
                 c.setMedicoNombre(rs.getString("m_nombre") + " " + rs.getString("m_apellido"));
                 citas.add(c);
@@ -166,7 +190,7 @@ public class CitaDAO {
 
     public List<Cita> obtenerCitasPorEstadoConNombres(String estado) {
         List<Cita> citas = new ArrayList<>();
-        String sql = "SELECT c.id_cita, c.id_paciente, c.id_medico, c.fecha_hora, c.estado, "
+        String sql = "SELECT c.id_cita, c.id_paciente, c.id_medico, c.fecha_hora, c.estado, c.motivo, c.creada_por, c.fecha_creacion, "
                    + "pp.nombre AS p_nombre, pp.apellido AS p_apellido, "
                    + "pm.nombre AS m_nombre, pm.apellido AS m_apellido "
                    + "FROM cita c "
@@ -186,6 +210,12 @@ public class CitaDAO {
                 c.setIdMedico(rs.getInt("id_medico"));
                 c.setFechaHora(parseFechaHora(rs));
                 c.setEstado(rs.getString("estado"));
+                c.setMotivo(rs.getString("motivo"));
+                c.setCreadaPor(rs.getInt("creada_por"));
+                Timestamp ts = rs.getTimestamp("fecha_creacion");
+                if (ts != null) {
+                    c.setFechaCreacion(ts.toLocalDateTime());
+                }
                 c.setPacienteNombre(rs.getString("p_nombre") + " " + rs.getString("p_apellido"));
                 c.setMedicoNombre(rs.getString("m_nombre") + " " + rs.getString("m_apellido"));
                 citas.add(c);

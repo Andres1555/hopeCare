@@ -61,7 +61,7 @@ public class TestModuloMedicamentosLab {
             System.out.println("  FALLO: No hay medicamentos");
         } else {
             for (Medicamento m : lista) {
-                System.out.println("  OK: " + m.getNombre() + " (stock: " + m.getStockActual() + ", min: " + m.getStockMinimo() + ")");
+                System.out.println("  OK: " + m.getNombreComercial() + " (stock: " + m.getStockActual() + ", min: " + m.getStockMinimo() + ")");
             }
         }
     }
@@ -84,7 +84,7 @@ public class TestModuloMedicamentosLab {
         InventarioService svc = new InventarioService();
         var lista = svc.listarStockBajo();
         for (Medicamento m : lista) {
-            System.out.println("  OK (stock bajo): " + m.getNombre() + " (" + m.getStockActual() + "/" + m.getStockMinimo() + ")");
+            System.out.println("  OK (stock bajo): " + m.getNombreComercial() + " (" + m.getStockActual() + "/" + m.getStockMinimo() + ")");
         }
         if (lista.isEmpty()) {
             System.out.println("  INFO: Ningún medicamento con stock bajo");

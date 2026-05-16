@@ -8,6 +8,7 @@ public class HorarioAtencion {
     private LocalTime horaInicio;
     private LocalTime horaFin;
     private int intervaloMinutos;
+    private boolean activo;
 
     public HorarioAtencion() {}
 
@@ -22,4 +23,6 @@ public class HorarioAtencion {
     public void setHoraFin(LocalTime horaFin) { this.horaFin = horaFin; }
     public int getIntervaloMinutos() { return intervaloMinutos; }
     public void setIntervaloMinutos(int intervaloMinutos) { this.intervaloMinutos = intervaloMinutos; }
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean activo) { this.activo = activo; }
 }

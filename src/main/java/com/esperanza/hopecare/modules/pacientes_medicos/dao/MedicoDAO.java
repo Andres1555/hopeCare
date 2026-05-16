@@ -4,11 +4,6 @@
  */
 package com.esperanza.hopecare.modules.pacientes_medicos.dao;
 
-/**
- *
- * @author Jenfer
- */
-
 import com.esperanza.hopecare.modules.pacientes_medicos.model.Medico;
 import com.esperanza.hopecare.common.db.DatabaseConnection;
 import java.sql.*;
@@ -20,7 +15,7 @@ public class MedicoDAO {
     public List<Medico> listarTodos() {
         List<Medico> lista = new ArrayList<>();
         String sql = "SELECT m.id_medico, m.id_persona, m.id_especialidad, m.registro_medico, "
-                   + "p.nombre, p.apellido, p.documento_identidad, e.nombre AS nombre_especialidad "
+                   + "p.nombre, p.apellido, p.documento_identidad, e.nombre_especialidad "
                    + "FROM medico m "
                    + "JOIN persona p ON m.id_persona = p.id_persona "
                    + "JOIN especialidad e ON m.id_especialidad = e.id_especialidad "
@@ -40,20 +35,10 @@ public class MedicoDAO {
                 m.setNombreEspecialidad(rs.getString("nombre_especialidad"));
                 lista.add(m);
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException ex) { ex.printStackTrace(); }
         return lista;
     }
 
-    /**
-     * Inserta un médico de forma transaccional:
-     * 1. Guarda en tabla persona (documento_identidad)
-     * 2. Obtiene id_persona generado (last_insert_rowid)
-     * 3. Guarda en tabla medico (id_persona, id_especialidad, registro_medico)
-     * Si falla, ejecuta ROLLBACK.
-     *
-     * @param medico Objeto Medico con datos completos
-     * @return true si la inserción fue exitosa, false en caso contrario
-     */
     public boolean insertarMedico(Medico medico) {
         String sqlPersona = "INSERT INTO persona (documento_identidad) VALUES (?)";
         String sqlMedico = "INSERT INTO medico (id_persona, id_especialidad, registro_medico) VALUES (?, ?, ?)";
@@ -64,9 +49,8 @@ public class MedicoDAO {
         
         try {
             conn = DatabaseConnection.getConnection();
-            conn.setAutoCommit(false);  // Inicio de transacción
+            conn.setAutoCommit(false);
             
-            // 1. Insertar en persona
             pstmtPersona = conn.prepareStatement(sqlPersona, Statement.RETURN_GENERATED_KEYS);
             pstmtPersona.setString(1, medico.getDocumentoIdentidad());
             int affectedRows = pstmtPersona.executeUpdate();
@@ -74,7 +58,6 @@ public class MedicoDAO {
                 throw new SQLException("Error al insertar en persona, ninguna fila afectada.");
             }
             
-            // 2. Obtener el id_persona generado
             ResultSet generatedKeys = pstmtPersona.getGeneratedKeys();
             int idPersona;
             if (generatedKeys.next()) {
@@ -84,7 +67,6 @@ public class MedicoDAO {
                 throw new SQLException("No se pudo obtener el id_persona generado.");
             }
             
-            // 3. Insertar en medico
             pstmtMedico = conn.prepareStatement(sqlMedico);
             pstmtMedico.setInt(1, idPersona);
             pstmtMedico.setInt(2, medico.getIdEspecialidad());
@@ -94,12 +76,10 @@ public class MedicoDAO {
                 throw new SQLException("Error al insertar en medico, ninguna fila afectada.");
             }
             
-            // Éxito: confirmar transacción
             conn.commit();
             return true;
             
         } catch (SQLException e) {
-            // Error: deshacer cambios
             if (conn != null) {
                 try {
                     conn.rollback();
@@ -110,7 +90,6 @@ public class MedicoDAO {
             e.printStackTrace();
             return false;
         } finally {
-            // Cerrar recursos y restaurar auto-commit
             try {
                 if (pstmtPersona != null) pstmtPersona.close();
                 if (pstmtMedico != null) pstmtMedico.close();
@@ -122,5 +101,5 @@ public class MedicoDAO {
                 e.printStackTrace();
             }
         }
-    }
+}
 }

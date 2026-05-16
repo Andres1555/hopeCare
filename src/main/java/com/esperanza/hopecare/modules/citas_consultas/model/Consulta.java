@@ -1,11 +1,15 @@
 package com.esperanza.hopecare.modules.citas_consultas.model;
 
+import java.time.LocalDateTime;
+
 public class Consulta {
     private int idConsulta;
     private int idCita;
     private String diagnostico;
     private String sintomas;
     private String tratamiento;
+    private String notasMedicas;
+    private LocalDateTime fechaConsulta;
     private boolean facturado;
 
     public Consulta() {}
@@ -28,6 +32,10 @@ public class Consulta {
     public void setSintomas(String sintomas) { this.sintomas = sintomas; }
     public String getTratamiento() { return tratamiento; }
     public void setTratamiento(String tratamiento) { this.tratamiento = tratamiento; }
+    public String getNotasMedicas() { return notasMedicas; }
+    public void setNotasMedicas(String notasMedicas) { this.notasMedicas = notasMedicas; }
+    public LocalDateTime getFechaConsulta() { return fechaConsulta; }
+    public void setFechaConsulta(LocalDateTime fechaConsulta) { this.fechaConsulta = fechaConsulta; }
     public boolean isFacturado() { return facturado; }
     public void setFacturado(boolean facturado) { this.facturado = facturado; }
 }
