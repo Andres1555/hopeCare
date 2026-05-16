@@ -1,10 +1,14 @@
 package com.esperanza.hopecare.modules.facturacion.dao;
 
+import com.esperanza.hopecare.common.db.DatabaseConnection;
+import com.esperanza.hopecare.modules.facturacion.dto.FacturaResumenDTO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FacturaDAO {
     public int insertarFactura(int idPaciente, double subtotal, double impuesto, double total, String estadoPago, Connection conn) throws SQLException {
@@ -20,5 +24,34 @@ public class FacturaDAO {
             ResultSet rs = ps.getGeneratedKeys();
             return rs.next() ? rs.getInt(1) : -1;
         }
+    }
+
+    public List<FacturaResumenDTO> listarTodasConPaciente() {
+        List<FacturaResumenDTO> lista = new ArrayList<>();
+        String sql = "SELECT f.id_factura, f.fecha_emision, f.subtotal, f.impuesto, f.total, f.estado_pago, "
+                   + "per.nombre, per.apellido "
+                   + "FROM factura f "
+                   + "JOIN paciente p ON f.id_paciente = p.id_paciente "
+                   + "JOIN persona per ON p.id_persona = per.id_persona "
+                   + "ORDER BY f.fecha_emision DESC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                String paciente = rs.getString("nombre") + " " + rs.getString("apellido");
+                lista.add(new FacturaResumenDTO(
+                    rs.getInt("id_factura"),
+                    paciente,
+                    rs.getString("fecha_emision"),
+                    rs.getDouble("subtotal"),
+                    rs.getDouble("impuesto"),
+                    rs.getDouble("total"),
+                    rs.getString("estado_pago")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lista;
     }
 }
