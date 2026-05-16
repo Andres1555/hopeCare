@@ -17,6 +17,7 @@ import java.util.List;
 public class ConsultaController implements IConsultaView {
     @FXML private ComboBox<String> cbCitasPendientes;
     @FXML private TextArea txtSintomas, txtDiagnostico, txtTratamiento;
+    @FXML private TextField txtPrecio;
     @FXML private Button btnCargar, btnGuardar, btnSolicitarExamen, btnRecetar;
 
     private ConsultaPresenter presenter;
@@ -63,6 +64,15 @@ public class ConsultaController implements IConsultaView {
     }
 
     @Override
+    public double getPrecio() {
+        try {
+            return Double.parseDouble(txtPrecio.getText().trim());
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    @Override
     public void mostrarCitasPendientes(List<Cita> citas) {
         citasList.clear();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -102,6 +112,7 @@ public class ConsultaController implements IConsultaView {
         txtSintomas.clear();
         txtDiagnostico.clear();
         txtTratamiento.clear();
+        txtPrecio.clear();
     }
 
     @Override

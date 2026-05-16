@@ -76,7 +76,12 @@ public class ConsultaPresenter {
             view.mostrarError("Síntomas y diagnóstico son obligatorios.");
             return;
         }
-        Consulta consulta = new Consulta(idCita, diagnostico, sintomas, tratamiento, false);
+        double precio = view.getPrecio();
+        if (precio < 0) {
+            view.mostrarError("El precio no puede ser negativo.");
+            return;
+        }
+        Consulta consulta = new Consulta(idCita, diagnostico, sintomas, tratamiento, false, precio);
         int idConsulta = consultaDAO.insertarConsultaYActualizarEstado(consulta);
         if (idConsulta > 0) {
             idConsultaActual = idConsulta;

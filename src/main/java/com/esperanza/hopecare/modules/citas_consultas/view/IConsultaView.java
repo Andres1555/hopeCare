@@ -13,6 +13,7 @@ public interface IConsultaView {
     String getDiagnostico();
     String getSintomas();
     String getTratamiento();
+    double getPrecio();
     void mostrarCitasPendientes(List<Cita> citas);
     void mostrarError(String mensaje);
     void mostrarExito(String mensaje);
