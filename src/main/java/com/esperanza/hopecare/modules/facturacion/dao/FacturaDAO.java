@@ -59,11 +59,11 @@ public class FacturaDAO {
 
     public Set<Integer> obtenerIdsPacientesConPendientes() {
         Set<Integer> ids = new HashSet<>();
-        String sql = "SELECT DISTINCT ci.id_paciente FROM consulta c JOIN cita ci ON c.id_cita = ci.id_cita WHERE c.facturado = 0 "
+        String sql = "SELECT DISTINCT ci.id_paciente FROM consulta c JOIN cita ci ON c.id_cita = ci.id_cita WHERE ci.estado = 'ATENDIDA' AND c.facturado = 0 "
                    + "UNION "
-                   + "SELECT DISTINCT ci.id_paciente FROM solicitud_examen s JOIN consulta c ON s.id_consulta = c.id_consulta JOIN cita ci ON c.id_cita = ci.id_cita WHERE s.facturado = 0 "
+                   + "SELECT DISTINCT ci.id_paciente FROM solicitud_examen s JOIN consulta c ON s.id_consulta = c.id_consulta JOIN cita ci ON c.id_cita = ci.id_cita WHERE ci.estado = 'ATENDIDA' AND s.facturado = 0 "
                    + "UNION "
-                   + "SELECT DISTINCT ci.id_paciente FROM entrega_medicamento em JOIN detalle_receta dr ON em.id_detalle_receta = dr.id_detalle JOIN receta r ON dr.id_receta = r.id_receta JOIN consulta c ON r.id_consulta = c.id_consulta JOIN cita ci ON c.id_cita = ci.id_cita WHERE em.facturado = 0";
+                   + "SELECT DISTINCT ci.id_paciente FROM entrega_medicamento em JOIN detalle_receta dr ON em.id_detalle_receta = dr.id_detalle JOIN receta r ON dr.id_receta = r.id_receta JOIN consulta c ON r.id_consulta = c.id_consulta JOIN cita ci ON c.id_cita = ci.id_cita WHERE ci.estado = 'ATENDIDA' AND em.facturado = 0";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ResultSet rs = ps.executeQuery();

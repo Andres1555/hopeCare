@@ -33,15 +33,20 @@ import java.util.List;
 public class CitasController implements ICitaView {
     @FXML private TableView<Cita> tvCitas;
     @FXML private Button btnNuevaCita;
+    @FXML private TextField txtBuscarCita;
+    @FXML private DatePicker dpFechaDesde;
+    @FXML private DatePicker dpFechaHasta;
 
     private CitaPresenter presenter;
     private ObservableList<Cita> citasList;
+    private FilteredList<Cita> citasFiltradas;
 
     @FXML
     public void initialize() {
         presenter = new CitaPresenter(this);
 
         configurarTablaCitas();
+        configurarFiltros();
         btnNuevaCita.setOnAction(e -> abrirDialogoNuevaCita());
 
         presenter.cargarCitasExistentes();
@@ -62,7 +67,8 @@ public class CitasController implements ICitaView {
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
 
         citasList = FXCollections.observableArrayList();
-        tvCitas.setItems(citasList);
+        citasFiltradas = new FilteredList<>(citasList, c -> true);
+        tvCitas.setItems(citasFiltradas);
 
         tvCitas.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
@@ -70,6 +76,42 @@ public class CitasController implements ICitaView {
                 if (sel != null) abrirDialogoEditarCita(sel);
             }
         });
+    }
+
+    private void configurarFiltros() {
+        Runnable aplicarFiltro = () -> {
+            String texto = txtBuscarCita.getText().toLowerCase().trim();
+            LocalDate desde = dpFechaDesde.getValue();
+            LocalDate hasta = dpFechaHasta.getValue();
+
+            citasFiltradas.setPredicate(cita -> {
+                if (!texto.isEmpty()) {
+                    String searchStr = texto.toLowerCase();
+                    boolean matchPac = cita.getPacienteNombre() != null &&
+                        cita.getPacienteNombre().toLowerCase().contains(searchStr);
+                    boolean matchMed = cita.getMedicoNombre() != null &&
+                        cita.getMedicoNombre().toLowerCase().contains(searchStr);
+                    if (!matchPac && !matchMed) return false;
+                }
+                LocalDateTime fh = cita.getFechaHora();
+                if (fh != null) {
+                    if (desde != null && fh.toLocalDate().isBefore(desde)) return false;
+                    if (hasta != null && fh.toLocalDate().isAfter(hasta)) return false;
+                }
+                return true;
+            });
+        };
+
+        txtBuscarCita.textProperty().addListener((obs, old, val) -> aplicarFiltro.run());
+        dpFechaDesde.valueProperty().addListener((obs, old, val) -> aplicarFiltro.run());
+        dpFechaHasta.valueProperty().addListener((obs, old, val) -> aplicarFiltro.run());
+    }
+
+    @FXML
+    private void limpiarFiltros() {
+        txtBuscarCita.clear();
+        dpFechaDesde.setValue(null);
+        dpFechaHasta.setValue(null);
     }
 
     private void abrirDialogoNuevaCita() {

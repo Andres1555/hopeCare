@@ -9,7 +9,7 @@ import java.util.List;
 
 public class ConsultaDAO {
     public List<Object[]> listarNoFacturadasPorPaciente(int idPaciente, Connection conn) throws SQLException {
-        String sql = "SELECT c.id_consulta, c.precio FROM consulta c JOIN cita ci ON c.id_cita = ci.id_cita WHERE ci.id_paciente = ? AND c.facturado = 0";
+        String sql = "SELECT c.id_consulta, c.precio FROM consulta c JOIN cita ci ON c.id_cita = ci.id_cita WHERE ci.id_paciente = ? AND ci.estado = 'ATENDIDA' AND c.facturado = 0";
         List<Object[]> resultados = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idPaciente);
