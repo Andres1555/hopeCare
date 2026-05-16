@@ -105,6 +105,7 @@ CREATE TABLE consulta (
     notas_medicas TEXT,
     fecha_consulta DATETIME DEFAULT CURRENT_TIMESTAMP,
     facturado INTEGER DEFAULT 0,
+    precio REAL NOT NULL DEFAULT 0.0,
     FOREIGN KEY (id_cita) REFERENCES cita(id_cita)
 );
 
@@ -280,6 +281,7 @@ CREATE TABLE IF NOT EXISTS consulta (
     sintomas TEXT,
     tratamiento TEXT,
     facturado INTEGER DEFAULT 0,
+    precio REAL NOT NULL DEFAULT 0.0,
     FOREIGN KEY (id_cita) REFERENCES cita(id_cita)
 );
 

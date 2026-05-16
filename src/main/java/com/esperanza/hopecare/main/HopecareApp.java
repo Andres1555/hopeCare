@@ -49,8 +49,10 @@ public class HopecareApp extends Application {
                 com.esperanza.hopecare.common.db.CargarDatosPrueba.main(new String[]{});
             } else {
                 System.out.println("Base de datos existente. Verificando migraciones...");
-                // Con el nuevo esquema completo, las migraciones anteriores ya no son necesarias
-                System.out.println("Migraciones anteriores no aplican con el nuevo esquema completo.");
+                if (!columnaExiste(stmt, "consulta", "precio")) {
+                    System.out.println("Migrando: agregando columna precio a consulta...");
+                    stmt.execute("ALTER TABLE consulta ADD COLUMN precio REAL NOT NULL DEFAULT 0.0");
+                }
                 
                 if (baseDatosVacia(stmt)) {
                     System.out.println("Insertando datos de prueba...");

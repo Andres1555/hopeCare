@@ -96,6 +96,19 @@ public class CargarDatosPrueba {
                 insertarCita(conn, 4, 2, dayAfter.withHour(15).withMinute(0), "PROGRAMADA", "Seguimiento", 2, now);
                 insertarCita(conn, 5, 3, dayAfter.withHour(9).withMinute(30), "PROGRAMADA", "Consulta cardiológica", 3, now);
 
+                // --- CONSULTAS (con precio para facturación) ---
+                insertarConsulta(conn, 1, "Paciente presenta síntomas de gripe", "Fiebre, tos, dolor de garganta", "Reposo y paracetamol", "", now, false, 50000.0);
+                insertarConsulta(conn, 3, "Control anual normal", "Ninguno", "Continuar con hábitos saludables", "", now, false, 80000.0);
+                insertarConsulta(conn, 5, "Seguimiento pediátrico", "Revisión de crecimiento", "Desarrollo normal", "", now, false, 60000.0);
+
+                // --- RECETA Y ENTREGA DE MEDICAMENTO ---
+                int receta1 = insertarReceta(conn, 1, "Tomar cada 8 horas", now);
+                int detalleReceta1 = insertarDetalleReceta(conn, receta1, 1, 2, "1 tableta cada 8 horas");
+                insertarEntregaMedicamento(conn, detalleReceta1, 2, 3, now, false);
+
+                // --- SOLICITUD DE EXAMEN ---
+                insertarSolicitudExamen(conn, 2, 1, "PENDIENTE", null, null, false);
+
                 conn.commit();
                 System.out.println("Datos de prueba insertados correctamente.");
 
@@ -245,5 +258,73 @@ public class CargarDatosPrueba {
             ps.setString(7, fechaCreacion.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             ps.executeUpdate();
         }
-}
+    }
+
+    private static void insertarConsulta(Connection conn, int idCita, String diagnostico, String sintomas, String tratamiento, String notasMedicas, LocalDateTime fechaConsulta, boolean facturado, double precio) throws SQLException {
+        String sql = "INSERT INTO consulta (id_cita, diagnostico, sintomas, tratamiento, notas_medicas, fecha_consulta, facturado, precio) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idCita);
+            ps.setString(2, diagnostico);
+            ps.setString(3, sintomas);
+            ps.setString(4, tratamiento);
+            ps.setString(5, notasMedicas);
+            ps.setString(6, fechaConsulta.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            ps.setBoolean(7, facturado);
+            ps.setDouble(8, precio);
+            ps.executeUpdate();
+        }
+    }
+
+    private static int insertarReceta(Connection conn, int idConsulta, String instrucciones, LocalDateTime fechaEmision) throws SQLException {
+        String sql = "INSERT INTO receta (id_consulta, fecha_emision, instrucciones, activa) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, idConsulta);
+            ps.setString(2, fechaEmision.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            ps.setString(3, instrucciones);
+            ps.setInt(4, 1);
+            ps.executeUpdate();
+            var rs = ps.getGeneratedKeys();
+            if (rs.next()) return rs.getInt(1);
+            throw new SQLException("No se pudo obtener id_receta");
+        }
+    }
+
+    private static int insertarDetalleReceta(Connection conn, int idReceta, int idMedicamento, int cantidad, String dosisIndicacion) throws SQLException {
+        String sql = "INSERT INTO detalle_receta (id_receta, id_medicamento, cantidad, dosis_indicacion) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, idReceta);
+            ps.setInt(2, idMedicamento);
+            ps.setInt(3, cantidad);
+            ps.setString(4, dosisIndicacion);
+            ps.executeUpdate();
+            var rs = ps.getGeneratedKeys();
+            if (rs.next()) return rs.getInt(1);
+            throw new SQLException("No se pudo obtener id_detalle");
+        }
+    }
+
+    private static void insertarEntregaMedicamento(Connection conn, int idDetalleReceta, int cantidadEntregada, int entregadoPor, LocalDateTime fechaEntrega, boolean facturado) throws SQLException {
+        String sql = "INSERT INTO entrega_medicamento (id_detalle_receta, cantidad_entregada, fecha_entrega, entregado_por, facturado) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idDetalleReceta);
+            ps.setInt(2, cantidadEntregada);
+            ps.setString(3, fechaEntrega.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            ps.setInt(4, entregadoPor);
+            ps.setBoolean(5, facturado);
+            ps.executeUpdate();
+        }
+    }
+
+    private static void insertarSolicitudExamen(Connection conn, int idConsulta, int idExamen, String estado, String resultadoTexto, byte[] resultadoArchivo, boolean facturado) throws SQLException {
+        String sql = "INSERT INTO solicitud_examen (id_consulta, id_examen, estado, resultado_texto, resultado_archivo, facturado) VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idConsulta);
+            ps.setInt(2, idExamen);
+            ps.setString(3, estado);
+            ps.setString(4, resultadoTexto);
+            ps.setBytes(5, resultadoArchivo);
+            ps.setBoolean(6, facturado);
+            ps.executeUpdate();
+        }
+    }
 }
