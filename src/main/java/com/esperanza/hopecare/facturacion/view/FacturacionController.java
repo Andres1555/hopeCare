@@ -8,15 +8,19 @@ import com.esperanza.hopecare.modules.pacientes_medicos.dao.PacienteDAO;
 import com.esperanza.hopecare.modules.pacientes_medicos.model.Paciente;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import java.util.List;
 
 public class FacturacionController {
-    @FXML private ComboBox<Paciente> cbPacientes;
-    @FXML private TextArea txtResultado;
+    @FXML private TextField txtBuscarPaciente;
     @FXML private Button btnGenerar;
+    @FXML private TableView<Paciente> tablaPacientes;
+    @FXML private TableColumn<Paciente, Integer> colPacId;
+    @FXML private TableColumn<Paciente, String> colPacNombre;
+    @FXML private TableColumn<Paciente, String> colPacApellido;
+    @FXML private TableColumn<Paciente, String> colPacDocumento;
     @FXML private TableView<FacturaResumenDTO> tablaFacturas;
     @FXML private TableColumn<FacturaResumenDTO, Integer> colId;
     @FXML private TableColumn<FacturaResumenDTO, String> colPaciente;
@@ -30,6 +34,7 @@ public class FacturacionController {
     private FacturaDAO facturaDAO;
     private PacienteDAO pacienteDAO;
     private ObservableList<FacturaResumenDTO> facturasList;
+    private FilteredList<Paciente> pacientesFiltrados;
 
     @FXML
     public void initialize() {
@@ -37,14 +42,37 @@ public class FacturacionController {
         facturaDAO = new FacturaDAO();
         pacienteDAO = new PacienteDAO();
 
-        configurarTabla();
-        cargarPacientes();
+        configurarTablaPacientes();
+        configurarTablaFacturas();
         cargarFacturas();
 
         btnGenerar.setOnAction(e -> generarFactura());
     }
 
-    private void configurarTabla() {
+    private void configurarTablaPacientes() {
+        colPacId.setCellValueFactory(new PropertyValueFactory<>("idPaciente"));
+        colPacNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
+        colPacApellido.setCellValueFactory(new PropertyValueFactory<>("apellido"));
+        colPacDocumento.setCellValueFactory(new PropertyValueFactory<>("documentoIdentidad"));
+
+        ObservableList<Paciente> pacientes = FXCollections.observableArrayList(pacienteDAO.listarTodos());
+        pacientesFiltrados = new FilteredList<>(pacientes, p -> true);
+        tablaPacientes.setItems(pacientesFiltrados);
+
+        tablaPacientes.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+
+        txtBuscarPaciente.textProperty().addListener((obs, oldVal, newVal) -> {
+            String filtro = newVal == null ? "" : newVal.toLowerCase().trim();
+            pacientesFiltrados.setPredicate(p -> {
+                if (filtro.isEmpty()) return true;
+                return p.getNombre().toLowerCase().contains(filtro)
+                    || p.getApellido().toLowerCase().contains(filtro)
+                    || (p.getDocumentoIdentidad() != null && p.getDocumentoIdentidad().toLowerCase().contains(filtro));
+            });
+        });
+    }
+
+    private void configurarTablaFacturas() {
         colId.setCellValueFactory(new PropertyValueFactory<>("idFactura"));
         colPaciente.setCellValueFactory(new PropertyValueFactory<>("pacienteNombre"));
         colFecha.setCellValueFactory(new PropertyValueFactory<>("fechaEmision"));
@@ -79,51 +107,31 @@ public class FacturacionController {
         tablaFacturas.setItems(facturasList);
     }
 
-    private void cargarPacientes() {
-        List<Paciente> pacientes = pacienteDAO.listarTodos();
-        cbPacientes.setItems(FXCollections.observableArrayList(pacientes));
-        cbPacientes.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(Paciente item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNombre() + " " + item.getApellido());
-            }
-        });
-        cbPacientes.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(Paciente item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNombre() + " " + item.getApellido());
-            }
-        });
-    }
-
     private void cargarFacturas() {
         facturasList.setAll(facturaDAO.listarTodasConPaciente());
     }
 
     private void generarFactura() {
-        Paciente paciente = cbPacientes.getValue();
+        Paciente paciente = tablaPacientes.getSelectionModel().getSelectedItem();
         if (paciente == null) {
-            mostrarAlerta("Error", "Seleccione un paciente.", Alert.AlertType.ERROR);
+            mostrarAlerta("Error", "Seleccione un paciente de la tabla.", Alert.AlertType.ERROR);
             return;
         }
-        int idPaciente = paciente.getIdPaciente();
-        FacturaDTO factura = service.generarFactura(idPaciente);
+        FacturaDTO factura = service.generarFactura(paciente.getIdPaciente());
         if (factura == null) {
-            txtResultado.setText("No hay conceptos pendientes para facturar.");
+            mostrarAlerta("Sin pendientes", "No hay conceptos pendientes para facturar.", Alert.AlertType.INFORMATION);
             return;
         }
         StringBuilder sb = new StringBuilder();
-        sb.append("Factura generada exitosamente\n");
+        sb.append("Factura generada exitosamente\n\n");
         sb.append(String.format("Subtotal: $%.2f\n", factura.getSubtotal()));
-        sb.append(String.format("Impuesto: $%.2f\n", factura.getImpuesto()));
-        sb.append(String.format("Total: $%.2f\n", factura.getTotal()));
+        sb.append(String.format("Impuesto (19%%): $%.2f\n", factura.getImpuesto()));
+        sb.append(String.format("Total: $%.2f\n\n", factura.getTotal()));
         sb.append("Detalles:\n");
         factura.getDetalles().forEach(d ->
             sb.append(String.format(" - %s: $%.2f\n", d.getConcepto(), d.getMonto()))
         );
-        txtResultado.setText(sb.toString());
+        mostrarAlerta("Factura generada", sb.toString(), Alert.AlertType.INFORMATION);
         cargarFacturas();
     }
 

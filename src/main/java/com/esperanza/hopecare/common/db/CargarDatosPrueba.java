@@ -109,6 +109,15 @@ public class CargarDatosPrueba {
                 // --- SOLICITUD DE EXAMEN ---
                 insertarSolicitudExamen(conn, 2, 1, "PENDIENTE", null, null, false);
 
+                // --- FACTURA DE PRUEBA (ya emitida) ---
+                int facturaTest = insertarFacturaPrueba(conn, 1, 130000.0, 24700.0, 154700.0, "PAGADO");
+                insertarDetalleFacturaPrueba(conn, facturaTest, "Consulta médica #1", 1, "CONSULTA", 50000.0);
+                insertarDetalleFacturaPrueba(conn, facturaTest, "Examen de laboratorio #1", 1, "EXAMEN", 25000.0);
+                insertarDetalleFacturaPrueba(conn, facturaTest, "Medicamento entregado #1", 1, "MEDICAMENTO", 55000.0);
+                marcarFacturadoConsulta(conn, 1);
+                marcarFacturadoSolicitud(conn, 1);
+                marcarFacturadoEntrega(conn, 1);
+
                 conn.commit();
                 System.out.println("Datos de prueba insertados correctamente.");
 
@@ -324,6 +333,57 @@ public class CargarDatosPrueba {
             ps.setString(4, resultadoTexto);
             ps.setBytes(5, resultadoArchivo);
             ps.setBoolean(6, facturado);
+            ps.executeUpdate();
+        }
+    }
+
+    private static int insertarFacturaPrueba(Connection conn, int idPaciente, double subtotal, double impuesto, double total, String estadoPago) throws SQLException {
+        String sql = "INSERT INTO factura (id_paciente, fecha_emision, subtotal, impuesto, total, estado_pago) VALUES (?, datetime('now', 'localtime'), ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, idPaciente);
+            ps.setDouble(2, subtotal);
+            ps.setDouble(3, impuesto);
+            ps.setDouble(4, total);
+            ps.setString(5, estadoPago);
+            ps.executeUpdate();
+            var rs = ps.getGeneratedKeys();
+            if (rs.next()) return rs.getInt(1);
+            throw new SQLException("No se pudo obtener id_factura");
+        }
+    }
+
+    private static void insertarDetalleFacturaPrueba(Connection conn, int idFactura, String concepto, int idReferencia, String tipoReferencia, double monto) throws SQLException {
+        String sql = "INSERT INTO detalle_factura (id_factura, concepto, id_referencia, tipo_referencia, monto) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idFactura);
+            ps.setString(2, concepto);
+            ps.setInt(3, idReferencia);
+            ps.setString(4, tipoReferencia);
+            ps.setDouble(5, monto);
+            ps.executeUpdate();
+        }
+    }
+
+    private static void marcarFacturadoConsulta(Connection conn, int idConsulta) throws SQLException {
+        String sql = "UPDATE consulta SET facturado = 1 WHERE id_consulta = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idConsulta);
+            ps.executeUpdate();
+        }
+    }
+
+    private static void marcarFacturadoSolicitud(Connection conn, int idSolicitud) throws SQLException {
+        String sql = "UPDATE solicitud_examen SET facturado = 1 WHERE id_solicitud = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idSolicitud);
+            ps.executeUpdate();
+        }
+    }
+
+    private static void marcarFacturadoEntrega(Connection conn, int idEntrega) throws SQLException {
+        String sql = "UPDATE entrega_medicamento SET facturado = 1 WHERE id_entrega = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idEntrega);
             ps.executeUpdate();
         }
     }
