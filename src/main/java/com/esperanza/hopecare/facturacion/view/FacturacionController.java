@@ -6,6 +6,7 @@ import com.esperanza.hopecare.modules.facturacion.dto.FacturaResumenDTO;
 import com.esperanza.hopecare.modules.facturacion.service.FacturacionService;
 import com.esperanza.hopecare.modules.pacientes_medicos.dao.PacienteDAO;
 import com.esperanza.hopecare.modules.pacientes_medicos.model.Paciente;
+import java.util.Set;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -21,6 +22,7 @@ public class FacturacionController {
     @FXML private TableColumn<Paciente, String> colPacNombre;
     @FXML private TableColumn<Paciente, String> colPacApellido;
     @FXML private TableColumn<Paciente, String> colPacDocumento;
+    @FXML private TableColumn<Paciente, String> colPacPendiente;
     @FXML private TableView<FacturaResumenDTO> tablaFacturas;
     @FXML private TableColumn<FacturaResumenDTO, Integer> colId;
     @FXML private TableColumn<FacturaResumenDTO, String> colPaciente;
@@ -35,6 +37,7 @@ public class FacturacionController {
     private PacienteDAO pacienteDAO;
     private ObservableList<FacturaResumenDTO> facturasList;
     private FilteredList<Paciente> pacientesFiltrados;
+    private Set<Integer> idsPacientesPendientes;
 
     @FXML
     public void initialize() {
@@ -42,6 +45,7 @@ public class FacturacionController {
         facturaDAO = new FacturaDAO();
         pacienteDAO = new PacienteDAO();
 
+        idsPacientesPendientes = facturaDAO.obtenerIdsPacientesConPendientes();
         configurarTablaPacientes();
         configurarTablaFacturas();
         cargarFacturas();
@@ -54,6 +58,27 @@ public class FacturacionController {
         colPacNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colPacApellido.setCellValueFactory(new PropertyValueFactory<>("apellido"));
         colPacDocumento.setCellValueFactory(new PropertyValueFactory<>("documentoIdentidad"));
+        colPacPendiente.setCellValueFactory(cellData -> {
+            boolean pendiente = idsPacientesPendientes.contains(cellData.getValue().getIdPaciente());
+            return new javafx.beans.property.SimpleStringProperty(pendiente ? "SÍ" : "NO");
+        });
+        colPacPendiente.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(item);
+                    if ("SÍ".equals(item)) {
+                        setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
+                    } else {
+                        setStyle("-fx-text-fill: #22c55e;");
+                    }
+                }
+            }
+        });
 
         ObservableList<Paciente> pacientes = FXCollections.observableArrayList(pacienteDAO.listarTodos());
         pacientesFiltrados = new FilteredList<>(pacientes, p -> true);
@@ -132,6 +157,8 @@ public class FacturacionController {
             sb.append(String.format(" - %s: $%.2f\n", d.getConcepto(), d.getMonto()))
         );
         mostrarAlerta("Factura generada", sb.toString(), Alert.AlertType.INFORMATION);
+        idsPacientesPendientes = facturaDAO.obtenerIdsPacientesConPendientes();
+        tablaPacientes.refresh();
         cargarFacturas();
     }
 

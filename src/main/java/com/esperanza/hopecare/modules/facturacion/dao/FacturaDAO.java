@@ -8,7 +8,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class FacturaDAO {
     public int insertarFactura(int idPaciente, double subtotal, double impuesto, double total, String estadoPago, Connection conn) throws SQLException {
@@ -53,5 +55,24 @@ public class FacturaDAO {
             e.printStackTrace();
         }
         return lista;
+    }
+
+    public Set<Integer> obtenerIdsPacientesConPendientes() {
+        Set<Integer> ids = new HashSet<>();
+        String sql = "SELECT DISTINCT ci.id_paciente FROM consulta c JOIN cita ci ON c.id_cita = ci.id_cita WHERE c.facturado = 0 "
+                   + "UNION "
+                   + "SELECT DISTINCT ci.id_paciente FROM solicitud_examen s JOIN consulta c ON s.id_consulta = c.id_consulta JOIN cita ci ON c.id_cita = ci.id_cita WHERE s.facturado = 0 "
+                   + "UNION "
+                   + "SELECT DISTINCT ci.id_paciente FROM entrega_medicamento em JOIN detalle_receta dr ON em.id_detalle_receta = dr.id_detalle JOIN receta r ON dr.id_receta = r.id_receta JOIN consulta c ON r.id_consulta = c.id_consulta JOIN cita ci ON c.id_cita = ci.id_cita WHERE em.facturado = 0";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                ids.add(rs.getInt(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ids;
     }
 }

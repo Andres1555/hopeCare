@@ -24,6 +24,7 @@
             <TableColumn fx:id="colPacNombre" text="Nombre" prefWidth="150" />
             <TableColumn fx:id="colPacApellido" text="Apellido" prefWidth="150" />
             <TableColumn fx:id="colPacDocumento" text="Documento" prefWidth="130" />
+            <TableColumn fx:id="colPacPendiente" text="Pendiente por facturar" prefWidth="150" />
         </columns>
     </TableView>
     <Label text="Facturas emitidas:" style="-fx-font-weight: bold;" />
