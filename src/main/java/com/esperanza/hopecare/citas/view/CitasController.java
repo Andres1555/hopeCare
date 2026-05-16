@@ -61,6 +61,7 @@ public class CitasController implements ICitaView {
         TableColumn<Cita, String> colMed = (TableColumn<Cita, String>) tvCitas.getColumns().get(2);
         TableColumn<Cita, String> colFecha = (TableColumn<Cita, String>) tvCitas.getColumns().get(3);
         TableColumn<Cita, String> colEstado = (TableColumn<Cita, String>) tvCitas.getColumns().get(4);
+        TableColumn<Cita, Number> colPrecio = (TableColumn<Cita, Number>) tvCitas.getColumns().get(5);
 
         colId.setCellValueFactory(new PropertyValueFactory<>("idCita"));
         colPac.setCellValueFactory(new PropertyValueFactory<>("pacienteNombre"));
@@ -68,6 +69,20 @@ public class CitasController implements ICitaView {
         colFecha.setCellValueFactory(cd -> new SimpleStringProperty(
             cd.getValue().getFechaHora().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
+
+        colPrecio.setCellValueFactory(new PropertyValueFactory<>("precio"));
+        colPrecio.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(Number item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    double val = item.doubleValue();
+                    setText(val > 0 ? String.format("$%.2f", val) : "—");
+                }
+            }
+        });
 
         citasList = FXCollections.observableArrayList();
         citasFiltradas = new FilteredList<>(citasList, c -> true);

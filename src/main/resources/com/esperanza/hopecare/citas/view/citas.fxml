@@ -33,6 +33,7 @@
             <TableColumn text="Médico" prefWidth="-1" />
             <TableColumn text="Fecha / Hora" prefWidth="-1" />
             <TableColumn text="Estado" prefWidth="-1" />
+            <TableColumn text="Precio" prefWidth="-1" />
         </columns>
     </TableView>
 </VBox>

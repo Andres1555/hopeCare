@@ -13,6 +13,7 @@ public class Cita {
     private LocalDateTime fechaCreacion;
     private String pacienteNombre;
     private String medicoNombre;
+    private double precio;
 
     public Cita() {}
 
@@ -43,4 +44,6 @@ public class Cita {
     public void setPacienteNombre(String pacienteNombre) { this.pacienteNombre = pacienteNombre; }
     public String getMedicoNombre() { return medicoNombre; }
     public void setMedicoNombre(String medicoNombre) { this.medicoNombre = medicoNombre; }
+    public double getPrecio() { return precio; }
+    public void setPrecio(double precio) { this.precio = precio; }
 }
