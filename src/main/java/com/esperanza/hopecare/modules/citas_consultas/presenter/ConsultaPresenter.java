@@ -1,5 +1,7 @@
 package com.esperanza.hopecare.modules.citas_consultas.presenter;
 import com.esperanza.hopecare.common.db.DatabaseConnection;
+import com.esperanza.hopecare.common.events.EventBus;
+import com.esperanza.hopecare.common.events.NuevaConsultaEvent;
 
 import com.esperanza.hopecare.modules.citas_consultas.dao.CitaDAO;
 import com.esperanza.hopecare.modules.citas_consultas.dao.ConsultaDAO;
@@ -78,6 +80,7 @@ public class ConsultaPresenter {
         int idConsulta = consultaDAO.insertarConsultaYActualizarEstado(consulta);
         if (idConsulta > 0) {
             idConsultaActual = idConsulta;
+            EventBus.getInstance().post(new NuevaConsultaEvent(idConsulta, idCita));
             view.actualizarEstadoAcciones(true);
             view.mostrarExito("Consulta registrada correctamente.");
             cargarCitasPendientes();
@@ -103,16 +106,32 @@ public class ConsultaPresenter {
             return;
         }
 
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+
             SolicitudExamen solicitud = new SolicitudExamen(idConsultaActual, idExamen);
             if (solicitudExamenDAO.insertar(solicitud, conn)) {
+                conn.commit();
                 view.mostrarExito("Examen solicitado correctamente.");
             } else {
+                conn.rollback();
                 view.mostrarError("No se pudo solicitar el examen.");
             }
         } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
             e.printStackTrace();
             view.mostrarError("Error de base de datos al solicitar examen.");
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) { e.printStackTrace(); }
+            }
         }
     }
 

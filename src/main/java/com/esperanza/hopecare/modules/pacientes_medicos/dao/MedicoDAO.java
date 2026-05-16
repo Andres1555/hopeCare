@@ -40,7 +40,7 @@ public class MedicoDAO {
     }
 
     public boolean insertarMedico(Medico medico) {
-        String sqlPersona = "INSERT INTO persona (documento_identidad) VALUES (?)";
+        String sqlPersona = "INSERT INTO persona (tipo_persona, nombre, apellido, documento_identidad) VALUES (?, ?, ?, ?)";
         String sqlMedico = "INSERT INTO medico (id_persona, id_especialidad, registro_medico) VALUES (?, ?, ?)";
         
         Connection conn = null;
@@ -52,7 +52,10 @@ public class MedicoDAO {
             conn.setAutoCommit(false);
             
             pstmtPersona = conn.prepareStatement(sqlPersona, Statement.RETURN_GENERATED_KEYS);
-            pstmtPersona.setString(1, medico.getDocumentoIdentidad());
+            pstmtPersona.setString(1, "MEDICO");
+            pstmtPersona.setString(2, medico.getNombre() != null ? medico.getNombre() : "Sin nombre");
+            pstmtPersona.setString(3, medico.getApellido() != null ? medico.getApellido() : "Sin apellido");
+            pstmtPersona.setString(4, medico.getDocumentoIdentidad());
             int affectedRows = pstmtPersona.executeUpdate();
             if (affectedRows == 0) {
                 throw new SQLException("Error al insertar en persona, ninguna fila afectada.");
