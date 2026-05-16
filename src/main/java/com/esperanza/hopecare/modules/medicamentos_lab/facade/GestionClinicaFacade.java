@@ -2,6 +2,8 @@ package com.esperanza.hopecare.modules.medicamentos_lab.facade;
 
 import com.esperanza.hopecare.modules.medicamentos_lab.dao.*;
 import com.esperanza.hopecare.modules.medicamentos_lab.model.*;
+import com.esperanza.hopecare.common.events.DatosFacturablesActualizadosEvent;
+import com.esperanza.hopecare.common.events.EventBus;
 import com.esperanza.hopecare.common.utils.RoleValidator;
 import com.esperanza.hopecare.common.db.DatabaseConnection;
 import java.sql.Connection;
@@ -79,6 +81,7 @@ public class GestionClinicaFacade {
             if (!okStock) throw new RuntimeException("Error al actualizar stock.");
 
             conn.commit();
+            EventBus.getInstance().post(new DatosFacturablesActualizadosEvent());
             return true;
 
         } catch (Exception e) {
@@ -111,7 +114,11 @@ public class GestionClinicaFacade {
         }
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-            return solicitudDAO.actualizarResultado(idSolicitud, resultado, estado, conn);
+            boolean ok = solicitudDAO.actualizarResultado(idSolicitud, resultado, estado, conn);
+            if (ok && "COMPLETADO".equals(estado)) {
+                EventBus.getInstance().post(new DatosFacturablesActualizadosEvent());
+            }
+            return ok;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;

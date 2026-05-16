@@ -11,6 +11,8 @@ import com.esperanza.hopecare.modules.pacientes_medicos.dao.PacienteDAO;
 import com.esperanza.hopecare.modules.pacientes_medicos.model.Especialidad;
 import com.esperanza.hopecare.modules.pacientes_medicos.model.Medico;
 import com.esperanza.hopecare.modules.pacientes_medicos.model.Paciente;
+import com.esperanza.hopecare.common.events.DatosFacturablesActualizadosEvent;
+import com.esperanza.hopecare.common.events.EventBus;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -406,6 +408,7 @@ public class CitasController implements ICitaView {
             if (citaDAO.actualizarCita(cita)) {
                 if ("ATENDIDA".equals(nuevoEstado)) {
                     new ConsultaDAO().insertarSiNoExiste(cita.getIdCita());
+                    EventBus.getInstance().post(new DatosFacturablesActualizadosEvent());
                 }
                 mostrarMensajeExito("Cita actualizada correctamente.");
                 dialog.close();

@@ -1,5 +1,7 @@
 package com.esperanza.hopecare.facturacion.view;
 
+import com.esperanza.hopecare.common.events.DatosFacturablesActualizadosEvent;
+import com.esperanza.hopecare.common.events.EventBus;
 import com.esperanza.hopecare.modules.facturacion.dao.FacturaDAO;
 import com.esperanza.hopecare.modules.facturacion.dto.FacturaDTO;
 import com.esperanza.hopecare.modules.facturacion.dto.FacturaResumenDTO;
@@ -52,6 +54,8 @@ public class FacturacionController {
         configurarTablaPacientes();
         configurarTablaFacturas();
         cargarFacturas();
+
+        EventBus.getInstance().register(DatosFacturablesActualizadosEvent.class, e -> refrescar());
 
         btnGenerar.setOnAction(e -> generarFactura());
     }
