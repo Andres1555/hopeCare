@@ -58,9 +58,9 @@ public class ConsultaDAO {
         }
     }
 
-    public void insertarSiNoExiste(int idCita) {
+    public void insertarSiNoExiste(int idCita, double precio) {
         String sqlCheck = "SELECT COUNT(*) FROM consulta WHERE id_cita = ?";
-        String sqlInsert = "INSERT INTO consulta (id_cita, diagnostico, sintomas, tratamiento, notas_medicas, fecha_consulta, facturado, precio) VALUES (?, '', '', '', '', datetime('now', 'localtime'), 0, 0.0)";
+        String sqlInsert = "INSERT INTO consulta (id_cita, diagnostico, sintomas, tratamiento, notas_medicas, fecha_consulta, facturado, precio) VALUES (?, '', '', '', '', datetime('now', 'localtime'), 0, ?)";
         try (Connection conn = DatabaseConnection.getConnection()) {
             try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {
                 ps.setInt(1, idCita);
@@ -69,6 +69,7 @@ public class ConsultaDAO {
             }
             try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
                 ps.setInt(1, idCita);
+                ps.setDouble(2, precio);
                 ps.executeUpdate();
             }
         } catch (SQLException e) {

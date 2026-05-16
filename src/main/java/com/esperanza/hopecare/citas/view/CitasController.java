@@ -384,6 +384,14 @@ public class CitasController implements ICitaView {
         cbEstado.getItems().addAll("PROGRAMADA", "CANCELADA", "ATENDIDA", "NO_ASISTIO");
         cbEstado.setValue(cita.getEstado());
 
+        TextField txtPrecio = new TextField();
+        txtPrecio.setPromptText("0.00");
+        txtPrecio.setPrefWidth(150);
+        txtPrecio.setDisable(!"ATENDIDA".equals(cita.getEstado()));
+        cbEstado.valueProperty().addListener((obs, old, val) ->
+            txtPrecio.setDisable(!"ATENDIDA".equals(val))
+        );
+
         Button btnGuardar = new Button("Guardar cambios");
 
         btnGuardar.setOnAction(e -> {
@@ -397,6 +405,17 @@ public class CitasController implements ICitaView {
                 return;
             }
 
+            double precio = 0.0;
+            if ("ATENDIDA".equals(nuevoEstado)) {
+                try {
+                    precio = Double.parseDouble(txtPrecio.getText().trim().isEmpty() ? "0" : txtPrecio.getText().trim());
+                    if (precio < 0) throw new NumberFormatException();
+                } catch (NumberFormatException ex) {
+                    mostrarMensajeError("Ingrese un costo de consulta válido (número positivo).");
+                    return;
+                }
+            }
+
             LocalTime nuevaHora = LocalTime.parse(horaStr);
             LocalDateTime nuevaFechaHora = LocalDateTime.of(nuevaFecha, nuevaHora);
 
@@ -407,7 +426,7 @@ public class CitasController implements ICitaView {
 
             if (citaDAO.actualizarCita(cita)) {
                 if ("ATENDIDA".equals(nuevoEstado)) {
-                    new ConsultaDAO().insertarSiNoExiste(cita.getIdCita());
+                    new ConsultaDAO().insertarSiNoExiste(cita.getIdCita(), precio);
                     EventBus.getInstance().post(new DatosFacturablesActualizadosEvent());
                 }
                 mostrarMensajeExito("Cita actualizada correctamente.");
@@ -435,6 +454,8 @@ public class CitasController implements ICitaView {
         editGrid.add(cbHora, 1, 2);
         editGrid.add(new Label("Nuevo estado:"), 0, 3);
         editGrid.add(cbEstado, 1, 3);
+        editGrid.add(new Label("Costo consulta ($):"), 0, 4);
+        editGrid.add(txtPrecio, 1, 4);
 
         VBox content = new VBox(12, infoSection, new Label("— Editar —"), editGrid, btnGuardar);
         content.setPadding(new Insets(15));
