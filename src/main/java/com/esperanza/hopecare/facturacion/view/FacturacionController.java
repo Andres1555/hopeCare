@@ -13,6 +13,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.VBox;
 
 public class FacturacionController {
     @FXML private TextField txtBuscarPaciente;
@@ -142,24 +143,59 @@ public class FacturacionController {
             mostrarAlerta("Error", "Seleccione un paciente de la tabla.", Alert.AlertType.ERROR);
             return;
         }
-        FacturaDTO factura = service.generarFactura(paciente.getIdPaciente());
-        if (factura == null) {
+        FacturaDTO preview = service.previsualizarFactura(paciente.getIdPaciente());
+        if (preview == null) {
             mostrarAlerta("Sin pendientes", "No hay conceptos pendientes para facturar.", Alert.AlertType.INFORMATION);
             return;
         }
+
         StringBuilder sb = new StringBuilder();
-        sb.append("Factura generada exitosamente\n\n");
-        sb.append(String.format("Subtotal: $%.2f\n", factura.getSubtotal()));
-        sb.append(String.format("Impuesto (19%%): $%.2f\n", factura.getImpuesto()));
-        sb.append(String.format("Total: $%.2f\n\n", factura.getTotal()));
-        sb.append("Detalles:\n");
-        factura.getDetalles().forEach(d ->
-            sb.append(String.format(" - %s: $%.2f\n", d.getConcepto(), d.getMonto()))
+        sb.append("Paciente: ").append(paciente.getNombre()).append(" ").append(paciente.getApellido()).append("\n\n");
+        sb.append("Conceptos pendientes:\n");
+        preview.getDetalles().forEach(d ->
+            sb.append(String.format("  - %s: $%.2f\n", d.getConcepto(), d.getMonto()))
         );
-        mostrarAlerta("Factura generada", sb.toString(), Alert.AlertType.INFORMATION);
-        idsPacientesPendientes = facturaDAO.obtenerIdsPacientesConPendientes();
-        tablaPacientes.refresh();
-        cargarFacturas();
+        sb.append(String.format("\nSubtotal: $%.2f\n", preview.getSubtotal()));
+        sb.append(String.format("Impuesto (19%%): $%.2f\n", preview.getImpuesto()));
+        sb.append(String.format("Total: $%.2f\n", preview.getTotal()));
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Previsualización de factura");
+        dialog.setHeaderText("Confirme los conceptos a facturar");
+
+        TextArea area = new TextArea(sb.toString());
+        area.setEditable(false);
+        area.setPrefHeight(300);
+        area.setStyle("-fx-font-family: monospace;");
+
+        VBox content = new VBox(10, area);
+        content.setStyle("-fx-padding: 15;");
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, ButtonType.OK);
+        dialog.setResultConverter(btn -> btn);
+
+        dialog.showAndWait().ifPresent(btn -> {
+            if (btn == ButtonType.OK) {
+                FacturaDTO factura = service.generarFactura(paciente.getIdPaciente());
+                if (factura == null) {
+                    mostrarAlerta("Error", "No se pudo generar la factura.", Alert.AlertType.ERROR);
+                    return;
+                }
+                StringBuilder res = new StringBuilder();
+                res.append("Factura generada exitosamente\n\n");
+                res.append(String.format("Subtotal: $%.2f\n", factura.getSubtotal()));
+                res.append(String.format("Impuesto (19%%): $%.2f\n", factura.getImpuesto()));
+                res.append(String.format("Total: $%.2f\n\n", factura.getTotal()));
+                res.append("Detalles:\n");
+                factura.getDetalles().forEach(d ->
+                    res.append(String.format(" - %s: $%.2f\n", d.getConcepto(), d.getMonto()))
+                );
+                mostrarAlerta("Factura generada", res.toString(), Alert.AlertType.INFORMATION);
+                idsPacientesPendientes = facturaDAO.obtenerIdsPacientesConPendientes();
+                tablaPacientes.refresh();
+                cargarFacturas();
+            }
+        });
     }
 
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
