@@ -13,6 +13,7 @@ import java.util.List;
 public class ConsultaPanel extends JPanel {
     private JComboBox<String> cbCitasPendientes;
     private JTextArea txtSintomas, txtDiagnostico, txtTratamiento;
+    private JTextField txtPrecio;
     private JButton btnAtender, btnSolicitarExamen, btnRecetar;
     private CitaDAO citaDAO;
     private ConsultaDAO consultaDAO;
@@ -32,13 +33,15 @@ public class ConsultaPanel extends JPanel {
         top.add(btnAtender);
         add(top, BorderLayout.NORTH);
 
-        JPanel center = new JPanel(new GridLayout(3, 1, 5, 5));
+        JPanel center = new JPanel(new GridLayout(4, 1, 5, 5));
         txtSintomas = new JTextArea(5, 40);
         txtDiagnostico = new JTextArea(5, 40);
         txtTratamiento = new JTextArea(5, 40);
+        txtPrecio = new JTextField(10);
         center.add(new JScrollPane(txtSintomas) {{ setBorder(BorderFactory.createTitledBorder("Síntomas")); }});
         center.add(new JScrollPane(txtDiagnostico) {{ setBorder(BorderFactory.createTitledBorder("Diagnóstico")); }});
         center.add(new JScrollPane(txtTratamiento) {{ setBorder(BorderFactory.createTitledBorder("Tratamiento")); }});
+        center.add(new JPanel(new FlowLayout()) {{ add(new JLabel("Precio ($):")); add(txtPrecio); setBorder(BorderFactory.createTitledBorder("Precio")); }});
         add(center, BorderLayout.CENTER);
 
         JPanel bottom = new JPanel(new FlowLayout());
@@ -75,7 +78,17 @@ public class ConsultaPanel extends JPanel {
         String diagnostico = txtDiagnostico.getText().trim();
         String tratamiento = txtTratamiento.getText().trim();
 
-        Consulta consulta = new Consulta(idCita, diagnostico, sintomas, tratamiento, false);
+        double precio;
+        try {
+            precio = Double.parseDouble(txtPrecio.getText().trim());
+        } catch (NumberFormatException e) {
+            precio = 0.0;
+        }
+        if (precio < 0) {
+            JOptionPane.showMessageDialog(this, "El precio no puede ser negativo.");
+            return;
+        }
+        Consulta consulta = new Consulta(idCita, diagnostico, sintomas, tratamiento, false, precio);
         // Use the existing transactional method
         int idConsulta = consultaDAO.insertarConsultaYActualizarEstado(consulta);
         if (idConsulta > 0) {
@@ -99,5 +112,6 @@ public class ConsultaPanel extends JPanel {
         txtSintomas.setText("");
         txtDiagnostico.setText("");
         txtTratamiento.setText("");
+        txtPrecio.setText("");
     }
 }

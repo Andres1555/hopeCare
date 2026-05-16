@@ -2,9 +2,12 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox spacing="15" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esperanza.hopecare.citas.view.CitasController">
@@ -13,6 +16,13 @@
     </padding>
 
     <Button fx:id="btnNuevaCita" text="+ Agendar nueva cita" maxWidth="220" />
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <TextField fx:id="txtBuscarCita" promptText="Buscar por paciente o médico..." HBox.hgrow="ALWAYS" />
+        <DatePicker fx:id="dpFechaDesde" promptText="Desde fecha" />
+        <DatePicker fx:id="dpFechaHasta" promptText="Hasta fecha" />
+        <Button text="Limpiar filtros" onAction="#limpiarFiltros" />
+    </HBox>
 
     <Label text="Citas registradas:" style="-fx-font-weight: bold;" />
     <TableView fx:id="tvCitas" VBox.vgrow="ALWAYS">
@@ -23,6 +33,7 @@
             <TableColumn text="Médico" prefWidth="-1" />
             <TableColumn text="Fecha / Hora" prefWidth="-1" />
             <TableColumn text="Estado" prefWidth="-1" />
+            <TableColumn text="Precio" prefWidth="-1" />
         </columns>
     </TableView>
 </VBox>

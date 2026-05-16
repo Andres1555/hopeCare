@@ -157,12 +157,14 @@ public class CitaDAO {
         List<Cita> citas = new ArrayList<>();
         String sql = "SELECT c.id_cita, c.id_paciente, c.id_medico, c.fecha_hora, c.estado, c.motivo, c.creada_por, c.fecha_creacion, "
                    + "pp.nombre AS p_nombre, pp.apellido AS p_apellido, "
-                   + "pm.nombre AS m_nombre, pm.apellido AS m_apellido "
+                   + "pm.nombre AS m_nombre, pm.apellido AS m_apellido, "
+                   + "COALESCE(cs.precio, 0.0) AS precio "
                    + "FROM cita c "
                    + "JOIN paciente pa ON c.id_paciente = pa.id_paciente "
                    + "JOIN persona pp ON pa.id_persona = pp.id_persona "
                    + "JOIN medico me ON c.id_medico = me.id_medico "
                    + "JOIN persona pm ON me.id_persona = pm.id_persona "
+                   + "LEFT JOIN consulta cs ON c.id_cita = cs.id_cita "
                    + "ORDER BY c.fecha_hora DESC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -182,6 +184,7 @@ public class CitaDAO {
                 }
                 c.setPacienteNombre(rs.getString("p_nombre") + " " + rs.getString("p_apellido"));
                 c.setMedicoNombre(rs.getString("m_nombre") + " " + rs.getString("m_apellido"));
+                c.setPrecio(rs.getDouble("precio"));
                 citas.add(c);
             }
         } catch (SQLException e) { e.printStackTrace(); }

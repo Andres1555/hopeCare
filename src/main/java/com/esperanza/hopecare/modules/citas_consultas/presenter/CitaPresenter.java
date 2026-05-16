@@ -1,5 +1,6 @@
 package com.esperanza.hopecare.modules.citas_consultas.presenter;
 
+import com.esperanza.hopecare.modules.citas_consultas.dao.ConsultaDAO;
 import com.esperanza.hopecare.modules.citas_consultas.dao.HorarioAtencionDAO;
 import com.esperanza.hopecare.modules.citas_consultas.dao.CitaDAO;
 import com.esperanza.hopecare.modules.citas_consultas.model.Cita;
@@ -10,6 +11,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import com.esperanza.hopecare.common.events.DatosFacturablesActualizadosEvent;
 import com.esperanza.hopecare.common.events.EventBus;
 import com.esperanza.hopecare.common.events.NuevaCitaEvent;
 
@@ -88,6 +90,7 @@ public class CitaPresenter {
         int idMedico = view.getIdMedicoSeleccionado();
         LocalDate fecha = view.getFechaSeleccionada();
         LocalTime hora = view.getHoraSeleccionada();
+        double precio = view.getPrecio();
 
         if (idPaciente <= 0 || idMedico <= 0 || fecha == null || hora == null) {
             view.mostrarMensajeError("Complete todos los campos.");
@@ -97,6 +100,10 @@ public class CitaPresenter {
         Cita nuevaCita = new Cita(idPaciente, idMedico, fecha.atTime(hora), "PROGRAMADA");
         boolean exito = citaDAO.insertarCita(nuevaCita);
         if (exito) {
+            if (precio > 0) {
+                new ConsultaDAO().insertarSiNoExiste(nuevaCita.getIdCita(), precio);
+            }
+            EventBus.getInstance().post(new DatosFacturablesActualizadosEvent());
             EventBus.getInstance().post(new NuevaCitaEvent(nuevaCita.getIdCita(), nuevaCita.getFechaHora()));
             view.mostrarMensajeExito("Cita reservada exitosamente.");
             view.limpiarCampos();

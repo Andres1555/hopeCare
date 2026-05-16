@@ -17,4 +17,5 @@ public interface ICitaView {
     int getIdMedicoSeleccionado();
     LocalDate getFechaSeleccionada();
     LocalTime getHoraSeleccionada();
+    double getPrecio();
 }

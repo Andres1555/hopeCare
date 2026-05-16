@@ -138,6 +138,9 @@ public class CitasPanel extends JPanel implements ICitaView {
     }
 
     @Override
+    public double getPrecio() { return 0.0; }
+
+    @Override
     public LocalTime getHoraSeleccionada() {
         String selected = (String) cbHorarios.getSelectedItem();
         return LocalTime.parse(selected);

@@ -33,6 +33,31 @@ public class FacturacionService {
         this.detalleFacturaDAO = new DetalleFacturaDAO();
     }
 
+    public FacturaDTO previsualizarFactura(int idPaciente) {
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            List<DetalleFacturaDTO> detallesPendientes = obtenerDetallesPendientes(idPaciente, conn);
+
+            if (detallesPendientes.isEmpty()) {
+                return null;
+            }
+
+            double subtotal = detallesPendientes.stream().mapToDouble(DetalleFacturaDTO::getMonto).sum();
+            double impuesto = subtotal * TASA_IMPUESTO;
+            double total = subtotal + impuesto;
+
+            return new FacturaDTO(idPaciente, subtotal, impuesto, total, "PENDIENTE", detallesPendientes);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
+        }
+    }
+
     /**
      * Genera una factura para un paciente a partir de todos los conceptos pendientes:
      * - Consultas médicas con facturado = 0
@@ -48,52 +73,23 @@ public class FacturacionService {
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false);
 
-            // 1. Obtener todos los conceptos pendientes con sus montos
-            List<DetalleFacturaDTO> detallesPendientes = new ArrayList<>();
-
-            // Consultas no facturadas
-            List<Object[]> consultas = consultaDAO.listarNoFacturadasPorPaciente(idPaciente, conn);
-            for (Object[] c : consultas) {
-                int idConsulta = (int) c[0];
-                double monto = (double) c[1];   // precio de la consulta
-                String concepto = "Consulta médica #" + idConsulta;
-                detallesPendientes.add(new DetalleFacturaDTO(concepto, idConsulta, "CONSULTA", monto));
-            }
-
-            // Exámenes de laboratorio no facturados
-            List<Object[]> examenes = solicitudExamenDAO.listarNoFacturadasPorPaciente(idPaciente, conn);
-            for (Object[] e : examenes) {
-                int idExamen = (int) e[0];
-                double monto = (double) e[1];
-                String concepto = "Examen de laboratorio #" + idExamen;
-                detallesPendientes.add(new DetalleFacturaDTO(concepto, idExamen, "EXAMEN", monto));
-            }
-
-            // Medicamentos entregados no facturados
-            List<Object[]> medicamentos = entregaDAO.listarNoFacturadosPorPaciente(idPaciente, conn);
-            for (Object[] m : medicamentos) {
-                int idEntrega = (int) m[0];
-                double monto = (double) m[1];
-                String concepto = "Medicamento entregado #" + idEntrega;
-                detallesPendientes.add(new DetalleFacturaDTO(concepto, idEntrega, "MEDICAMENTO", monto));
-            }
+            List<DetalleFacturaDTO> detallesPendientes = obtenerDetallesPendientes(idPaciente, conn);
 
             if (detallesPendientes.isEmpty()) {
                 conn.rollback();
-                return null; // No hay nada que facturar
+                return null;
             }
 
-            // 2. Calcular subtotal, impuesto y total
             double subtotal = detallesPendientes.stream().mapToDouble(DetalleFacturaDTO::getMonto).sum();
             double impuesto = subtotal * TASA_IMPUESTO;
             double total = subtotal + impuesto;
 
-            // 3. Insertar cabecera de factura
+            // Insertar cabecera de factura
             String estadoPago = "PENDIENTE";
             int idFactura = facturaDAO.insertarFactura(idPaciente, subtotal, impuesto, total, estadoPago, conn);
             if (idFactura == -1) throw new SQLException("No se pudo insertar la factura");
 
-            // 4. Insertar cada detalle y actualizar el estado facturado de los conceptos origen
+            // Insertar cada detalle y actualizar el estado facturado de los conceptos origen
             for (DetalleFacturaDTO detalle : detallesPendientes) {
                 boolean okDetalle = detalleFacturaDAO.insertarDetalle(idFactura, detalle, conn);
                 if (!okDetalle) throw new SQLException("Error al insertar detalle: " + detalle.getConcepto());
@@ -106,7 +102,7 @@ public class FacturacionService {
             conn.commit();
             EventBus.getInstance().post(new NuevaFacturaEvent(idFactura, total));
 
-            // 5. Retornar el DTO inmutable
+            // Retornar el DTO inmutable
             return new FacturaDTO(idPaciente, subtotal, impuesto, total, estadoPago, detallesPendientes);
 
         } catch (SQLException e) {
@@ -138,5 +134,32 @@ public class FacturacionService {
             default:
                 return false;
         }
+    }
+
+    private List<DetalleFacturaDTO> obtenerDetallesPendientes(int idPaciente, Connection conn) throws SQLException {
+        List<DetalleFacturaDTO> detalles = new ArrayList<>();
+
+        List<Object[]> consultas = consultaDAO.listarNoFacturadasPorPaciente(idPaciente, conn);
+        for (Object[] c : consultas) {
+            int idConsulta = (int) c[0];
+            double monto = (double) c[1];
+            detalles.add(new DetalleFacturaDTO("Consulta médica #" + idConsulta, idConsulta, "CONSULTA", monto));
+        }
+
+        List<Object[]> examenes = solicitudExamenDAO.listarNoFacturadasPorPaciente(idPaciente, conn);
+        for (Object[] e : examenes) {
+            int idExamen = (int) e[0];
+            double monto = (double) e[1];
+            detalles.add(new DetalleFacturaDTO("Examen de laboratorio #" + idExamen, idExamen, "EXAMEN", monto));
+        }
+
+        List<Object[]> medicamentos = entregaDAO.listarNoFacturadosPorPaciente(idPaciente, conn);
+        for (Object[] m : medicamentos) {
+            int idEntrega = (int) m[0];
+            double monto = (double) m[1];
+            detalles.add(new DetalleFacturaDTO("Medicamento entregado #" + idEntrega, idEntrega, "MEDICAMENTO", monto));
+        }
+
+        return detalles;
     }
 }
