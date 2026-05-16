@@ -1,5 +1,7 @@
 package com.esperanza.hopecare.common.db;
 
+import com.esperanza.hopecare.common.utils.Hasher;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -132,7 +134,7 @@ public class CargarDatosPrueba {
         String sql = "INSERT OR IGNORE INTO usuario (nombre_usuario, contrasena_hash, id_rol, activo) VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, nombreUsuario);
-            ps.setString(2, password); // En producción se debe hacer hash
+            ps.setString(2, Hasher.hash(password));
             ps.setInt(3, idRol);
             ps.setInt(4, 1);
             ps.executeUpdate();

@@ -25,7 +25,7 @@ public class HopecareApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/esperanza/hopecare/main/main.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/esperanza/hopecare/Auth/login.fxml"));
         BorderPane root = loader.load();
 
         Scene scene = new Scene(root, 1280, 720);

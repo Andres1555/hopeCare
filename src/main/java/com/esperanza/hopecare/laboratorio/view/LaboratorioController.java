@@ -6,11 +6,14 @@ import com.esperanza.hopecare.modules.medicamentos_lab.dao.SolicitudExamenDAO;
 import com.esperanza.hopecare.modules.medicamentos_lab.model.ExamenLaboratorio;
 import com.esperanza.hopecare.modules.medicamentos_lab.model.SolicitudExamen;
 import com.esperanza.hopecare.modules.medicamentos_lab.service.ExamenService;
+import com.esperanza.hopecare.common.db.DatabaseConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,6 +45,7 @@ public class LaboratorioController {
     @FXML private TextField txtIdSolicitud;
     @FXML private TextArea txtResultado;
     @FXML private Button btnRegistrar;
+    @FXML private Button btnCancelarSolicitud;
 
     private GestionClinicaFacade facade;
     private ExamenLaboratorioDAO examenDAO;
@@ -298,5 +302,43 @@ public class LaboratorioController {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    @FXML
+    private void cancelarSolicitudClick() {
+        SolicitudExamen selected = tblSolicitudes.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            mostrarAlerta("Advertencia", "Seleccione una solicitud de la tabla", Alert.AlertType.WARNING);
+            return;
+        }
+
+        if (!"PENDIENTE".equals(selected.getEstado())) {
+            mostrarAlerta("Error", "Solo se pueden cancelar solicitudes en estado PENDIENTE", Alert.AlertType.ERROR);
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirmar cancelación");
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿Está seguro de cancelar la solicitud #" + selected.getIdSolicitud() + "?");
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try (Connection conn = DatabaseConnection.getConnection()) {
+                    conn.setAutoCommit(false);
+                    boolean ok = solicitudDAO.cancelar(selected.getIdSolicitud(), conn);
+                    if (ok) {
+                        conn.commit();
+                        mostrarAlerta("Éxito", "Solicitud cancelada correctamente", Alert.AlertType.INFORMATION);
+                        cargarDatos();
+                    } else {
+                        conn.rollback();
+                        mostrarAlerta("Error", "No se pudo cancelar la solicitud", Alert.AlertType.ERROR);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    mostrarAlerta("Error", "Error de base de datos: " + e.getMessage(), Alert.AlertType.ERROR);
+                }
+            }
+        });
     }
 }

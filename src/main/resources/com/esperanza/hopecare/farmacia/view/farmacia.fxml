@@ -21,6 +21,7 @@
             <TextField fx:id="txtBuscarMedicamento" promptText="Buscar medicamento..." styleClass="search-field" prefWidth="250"/>
             <Button fx:id="btnAgregarMedicamento" text="+ Agregar" styleClass="button button-small" onAction="#agregarMedicamentoClick"/>
             <Button fx:id="btnActualizarStock" text="Actualizar Stock" styleClass="button-secondary button-small" onAction="#actualizarStockClick"/>
+            <Button fx:id="btnEliminarMedicamento" text="Eliminar" styleClass="button-danger button-small" onAction="#eliminarMedicamentoClick"/>
         </HBox>
 
         <TableView fx:id="tblInventario" styleClass="inventory-table" prefHeight="200">
@@ -51,7 +52,10 @@
 
         <!-- Card: Entregas Recientes -->
         <VBox styleClass="card" HBox.hgrow="ALWAYS">
-            <Label text="ENTREGAS RECIENTES" styleClass="section-title"/>
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="ENTREGAS RECIENTES" styleClass="section-title"/>
+                <Button fx:id="btnCancelarEntrega" text="Cancelar Entrega" styleClass="button-danger button-small" onAction="#cancelarEntregaClick"/>
+            </HBox>
             <TableView fx:id="tblEntregas" prefHeight="250">
                 <columns>
                     <TableColumn fx:id="colEntregaId" text="ID" prefWidth="50"/>

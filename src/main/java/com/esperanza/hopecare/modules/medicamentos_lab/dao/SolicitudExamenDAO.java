@@ -81,6 +81,14 @@ public class SolicitudExamenDAO {
         }
     }
 
+    public boolean cancelar(int idSolicitud, Connection conn) throws SQLException {
+        String sql = "UPDATE solicitud_examen SET estado = 'CANCELADO' WHERE id_solicitud = ? AND estado = 'PENDIENTE'";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idSolicitud);
+            return ps.executeUpdate() == 1;
+        }
+    }
+
     public List<SolicitudExamen> listarTodas() {
         List<SolicitudExamen> lista = new ArrayList<>();
         String sql = "SELECT id_solicitud, id_consulta, id_examen, fecha_solicitud, estado, resultado_texto, resultado_archivo, realizado_por, facturado FROM solicitud_examen ORDER BY fecha_solicitud DESC";

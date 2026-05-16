@@ -39,8 +39,9 @@
         <!-- Card: Solicitudes Pendientes -->
         <VBox styleClass="card" HBox.hgrow="ALWAYS">
             <HBox styleClass="toolbar" spacing="12" alignment="CENTER_LEFT">
-                <Label text="SOLICITUDES PENDIENTES" styleClass="section-title"/>
+                <Label text="SOLICITUDES" styleClass="section-title"/>
                 <ComboBox fx:id="cbFiltroEstado" promptText="Filtrar por estado" prefWidth="150" onAction="#filtroEstadoChange"/>
+                <Button fx:id="btnCancelarSolicitud" text="Cancelar Solicitud" styleClass="button-danger button-small" onAction="#cancelarSolicitudClick"/>
             </HBox>
             <TableView fx:id="tblSolicitudes" prefHeight="250">
                 <columns>

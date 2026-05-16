@@ -8,7 +8,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.esperanza.hopecare.ui.Auth.LoginController"
+            fx:controller="com.esperanza.hopecare.Auth.view.LoginController"
             styleClass="auth-root"
             stylesheets="@../main/hopecare.css">
 

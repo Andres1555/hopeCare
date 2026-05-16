@@ -1,7 +1,7 @@
 # HopeCare - Guía para Agentes IA
 
 ## Stack Tecnológico
-- Java 17+, JavaFX 21, Maven, SQLite
+- Java 11, JavaFX 21, Maven, SQLite
 - Dependencias principales: sqlite-jdbc, javafx-controls, javafx-fxml
 
 ## Arquitectura
@@ -58,46 +58,102 @@
 
 ### Farmacia (testeable 100%)
 - **FXML**: `farmacia.fxml` - 3 cards (Inventario, Recetas Activas, Entregas Recientes) + form de entrega
-- **Controller**: `FarmaciaController.java` - TableViews con CellFactory, diálogos para agregar/actualizar
+- **Controller**: `FarmaciaController.java` - TableViews con CellFactory, diálogos para agregar/actualizar/eliminar
 - **Service**: `InventarioService.java` - agregarMedicamento(), actualizarStock()
-- **DAOs**: `EntregaMedicamentoDAO.java` - listarTodas(), listarPorReceta()
+- **DAOs**: `EntregaMedicamentoDAO.java` (listarTodas, listarPorReceta, eliminar), `MedicamentoDAO.java` (eliminar)
 
 ### Laboratorio (testeable 100%)
 - **FXML**: `laboratorio.fxml` - 3 cards (Catálogo Exámenes, Solicitudes, Resultados) + form de registro
-- **Controller**: `LaboratorioController.java` - TableViews, filtros por estado, diálogos para agregar examen
+- **Controller**: `LaboratorioController.java` - TableViews, filtros por estado, diálogos para agregar/cancelar
 - **Service**: `ExamenService.java` - agregarExamen(), listarSolicitudesPorEstado(), listarTodasSolicitudes()
-- **DAOs**: `SolicitudExamenDAO.java` - listarTodas(), listarPorEstado()
+- **DAOs**: `SolicitudExamenDAO.java` - listarTodas(), listarPorEstado(), cancelar()
 
-## Base de Datos
+### Funcionalidades de Cancelación
+- **Farmacia**: Eliminar medicamento del inventario; Cancelar entrega (revierte stock)
+- **Laboratorio**: Cancelar solicitud de examen (solo PENDIENTE)
+- Todas incluyen diálogo de confirmación antes de ejecutar
+
+## Base de Datos (Schema Completo)
+
+### Schema Actual
 - Archivo: `sisgeho.db` en raíz del proyecto
-- Script DDL: `src/main/resources/sisgeho_schema.sql`
-- Datos de prueba: `CargarDatosPrueba.java` (ejecutar con `mvn exec:java -Dexec.mainClass="..."`)
+- Script DDL: `src/main/resources/sisgeho_schema.sql` (schema completo con todas las tablas)
+- Datos de prueba: `CargarDatosPrueba.java` (5 pacientes, 3 médicos, 5 medicamentos, 5 exámenes, 10 citas)
 - Driver: SQLite v3.45.1.0 (xerial sqlite-jdbc)
-- **No modificar el schema** (es minimalista, campos sujeto a cambios por otro equipo)
+
+### Esquema de Tablas
+```
+USUARIOS Y ROLES:
+  - rol (id_rol, nombre_rol, descripcion)
+  - persona (id_persona, tipo_persona, nombre, apellido, documento_identidad, fecha_nacimiento, telefono, email, direccion, genero, id_usuario)
+  - usuario (id_usuario, nombre_usuario, contrasena_hash, id_rol, activo, fecha_creacion)
+
+REGISTRO:
+  - especialidad (id_especialidad, nombre_especialidad, descripcion)
+  - paciente (id_paciente, id_persona, historia_clinica, alergias, grupo_sanguineo, contacto_emergencia, fecha_registro)
+  - medico (id_medico, id_persona, id_especialidad, registro_medico, activo)
+
+CITAS Y CONSULTAS:
+  - horario_atencion (id_horario, id_medico, dia_semana, hora_inicio, hora_fin, intervalo_minutos, activo)
+  - cita (id_cita, id_paciente, id_medico, fecha_hora, estado, motivo, creada_por, fecha_creacion)
+  - consulta (id_consulta, id_cita, diagnostico, sintomas, tratamiento, notas_medicas, fecha_consulta, facturado)
+
+FARMACIA:
+  - medicamento (id_medicamento, nombre_comercial, principio_activo, presentacion, concentracion, precio_unitario, stock_actual, stock_minimo, requiere_receta)
+  - receta (id_receta, id_consulta, fecha_emision, instrucciones, activa)
+  - detalle_receta (id_detalle, id_receta, id_medicamento, cantidad, dosis_indicacion)
+  - entrega_medicamento (id_entrega, id_detalle_receta, cantidad_entregada, fecha_entrega, entregado_por, facturado)
+
+LABORATORIO:
+  - examen_laboratorio (id_examen, nombre_examen, descripcion, precio, tiempo_resultado_horas, resultado_archivo)
+  - solicitud_examen (id_solicitud, id_consulta, id_examen, fecha_solicitud, estado, resultado_texto, resultado_archivo, realizado_por, facturado)
+
+FACTURACIÓN:
+  - factura (id_factura, id_paciente, fecha_emision, subtotal, impuesto, total, estado_pago, forma_pago)
+  - detalle_factura (id_detalle_factura, id_factura, concepto, id_referencia, tipo_referencia, monto)
+
+AUDITORÍA:
+  - bitacora_eventos (id_evento, id_usuario, tabla_afectada, id_registro, accion, fecha_hora, datos_antes, datos_despues)
+```
+
+### Columnas de Compatibilidad (stock_minimo, facturado)
+- `medicamento.stock_minimo`: Mantenido para alertas de stock bajo en DashboardDAO, FarmaciaController, InventarioService
+- `entrega_medicamento.facturado`: Mantenido para compatibilidad con módulo de facturación
+- `solicitud_examen.facturado`: Mantenido para compatibilidad con módulo de facturación
 
 ## Inicialización Automática de BD
 La app crea y puebla la base de datos automáticamente al iniciar (`HopecareApp.init()`):
 1. Verifica si la tabla `persona` existe
 2. Si no existe → ejecuta `sisgeho_schema.sql` para crear todas las tablas
-3. Si `persona` está vacía → inserta datos de prueba (5 pacientes, 3 médicos, 10 citas, etc.)
+3. Si `persona` está vacía → inserta datos de prueba (5 pacientes, 3 médicos, 5 medicamentos, 5 exámenes, 10 citas, 4 usuarios, horarios, etc.)
 4. Si ya hay datos → no hace nada
 
 Para resetear la BD: borrar `sisgeho.db` de la raíz y reiniciar la app.
 
+## Usuarios de Prueba
+| Usuario | Contraseña | Rol |
+|---------|------------|-----|
+| admin | admin123 | ADMIN |
+| recepcion | recepcion123 | RECEPCION |
+| farmacia | farmacia123 | FARMACIA |
+| laboratorio | laboratorio123 | LABORATORIO |
+
+## Testing
+- Archivos de prueba: `src/main/java/com/esperanza/hopecare/test/`
+- TestModuloMedicamentosLab.java - pruebas del módulo pharmacy/lab
+- TestDatabase.java - pruebas de conexión a BD
+
 ## Comandos Útiles
 ```bash
-# Configurar entorno (ejecutar una vez por terminal)
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-25.0.2"
-$mvn = "$env:USERPROFILE\.m2\wrapper\dists\apache-maven-3.9.12-bin\5nmfsn99br87k5d4ajlekdq10k\apache-maven-3.9.12\bin\mvn.cmd"
+# Compilar
+mvn clean compile
 
 # Ejecutar app (inicializa BD automáticamente)
-& $mvn clean javafx:run
+mvn javafx:run
 
-# Compilar
-& $mvn clean compile
+# Compilar con Maven directo
+"C:\Program Files\Zulu\zulu-21\bin\javac" -version
 ```
-
-**Nota**: Maven wrapper en `%USERPROFILE%\.m2\wrapper\dists\apache-maven-3.9.12-bin`. Si usas NetBeans/IntelliJ/VS Code con Maven integrado, no necesitas configurar PATH.
 
 ## Navegación Principal
 La navegación se maneja desde `MainController.java`:
@@ -108,12 +164,11 @@ La navegación se maneja desde `MainController.java`:
 ## Sistema de Módulos (Java Platform Module System)
 - `module-info.java` centraliza las configuraciones de módulos Java
 - Los paquetes `opens` necesarios para JavaFX (`javafx.fxml` para controllers, `javafx.base` para modelos con PropertyValueFactory)
-- Paquetes model abiertos a `javafx.base`: `medicamentos_lab.model`, `citas_consultas.model`, `pacientes_medicos.model`, `dashboard.model`
+- Paquetes model abiertos a `javafx.base`: `medicamentos_lab.model`, `citas_consultas.model`, `pacientes_medicos.model`, `dashboard.model`, `Auth.model`
 - Al agregar nuevos modelos usados en TableView con PropertyValueFactory, agregar `opens` correspondiente en `module-info.java`
 
 ## Pendientes Conocidos
-- Login con roles (actualmente se pasa rol fijo)
-- Módulos de otros equipos (Dashboard, Registro, Facturación): tienen estructura visual pero lógica o DAOs pendientes
+- Módulos Dashboard, Registro, Facturación: estructura visual completa pero DAOs/Service pendientes
 - Reportes (JasperReports)
 - Pruebas unitarias JUnit 5
 - JAR ejecutable con Maven Assembly Plugin
@@ -121,21 +176,8 @@ La navegación se maneja desde `MainController.java`:
 ## Estructura de Archivos Modificados
 - `main.fxml` / `MainController.java` - Nueva navegación header
 - `hopecare.css` - Paleta teal/slate completa
-- `farmacia.fxml` / `FarmaciaController.java` - Completo
-- `laboratorio.fxml` / `LaboratorioController.java` - Completo
+- `farmacia.fxml` / `FarmaciaController.java` - Completo + botones eliminar/cancelar
+- `laboratorio.fxml` / `LaboratorioController.java` - Completo + botón cancelar
 - `dashboard.fxml` - Estilo visual actualizado (lógica existente)
-
-## Últimos Cambios (Rediseño flujo citas: tabla principal + diálogo modal + filtros + fix selección)
-- `Especialidad.java` (nuevo) - Modelo para la tabla especialidad (idEspecialidad, nombre)
-- `EspecialidadDAO.java` (nuevo) - DAO con `listarTodas()` para cargar especialidades en ComboBox
-- `HorarioAtencionDAO.java` - Nuevo método `obtenerHorariosPorMedico(int)` que retorna todos los horarios de un médico (todos los días)
-- `CitaDAO.java` - Nuevo método `listarTodasConNombres()` con JOIN a persona (todas las citas ORDER BY fecha DESC)
-- `ICitaView.java` - Nuevos métodos `mostrarCitasExistentes(List<Cita>)`, `mostrarDiasDisponibles(List<Integer>)` y `getDiaSeleccionado()`
-- `CitaPresenter.java` - Nuevos métodos `cargarCitasExistentes()` y `cargarDiasDisponibles(int idMedico)`
-- `citas.fxml` - Rediseñado: tabla de citas existentes (ID, Paciente, Médico, Fecha/Hora, Estado) + botón "Agendar nueva cita". El formulario de creación se eliminó del FXML y ahora es un diálogo modal generado programáticamente
-- `CitasController.java` - Rewrite completo: carga y muestra citas existentes en tabla principal. "Nueva Cita" abre un `Dialog<>` modal con MVP inline (crea `ICitaView` temporal para el diálogo). El diálogo contiene: buscador de pacientes, filtro especialidad + buscador médicos, selector de días disponibles, auto-asignación de fecha, horarios y botón reservar. Al cerrar el diálogo, refresca la tabla de citas.
-- `CitaConsoleView.java` - Implementados stubs de `mostrarCitasExistentes`, `mostrarDiasDisponibles` y `getDiaSeleccionado`
-- `CitasPanel.java` (Swing) - Implementados stubs de `mostrarCitasExistentes`, `mostrarDiasDisponibles` y `getDiaSeleccionado`
-- `ConsultaPresenter.java` - Cambiado a `obtenerCitasPorEstadoConNombres()` para mostrar nombres paciente/médico en ComboBox
-- `ConsultaController.java` - Ahora implementa `IConsultaView` y delega toda la lógica de negocio a `ConsultaPresenter` (MVP completo)
-- `CitasController.java` - Fix: eliminado `Platform.runLater` en la `ICitaView` temporal del diálogo (race condition cerraba el diálogo antes de la alerta). `dialog.close()` movido a `mostrarMensajeExito` (solo se cierra en éxito). Filtros de pacientes/médicos cambiados a `FilteredList` con `setPredicate()` para preservar selección del usuario
+- `Auth/` - Login/Signup con autenticación SHA-256 y flujo completo
+- `module-info.java` - opens para Auth.view

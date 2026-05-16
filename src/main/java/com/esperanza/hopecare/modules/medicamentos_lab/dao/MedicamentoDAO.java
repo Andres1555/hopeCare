@@ -29,6 +29,14 @@ public class MedicamentoDAO {
         }
     }
 
+    public boolean eliminar(int idMedicamento, Connection conn) throws SQLException {
+        String sql = "DELETE FROM medicamento WHERE id_medicamento = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idMedicamento);
+            return ps.executeUpdate() == 1;
+        }
+    }
+
     public boolean insertar(Medicamento medicamento, Connection conn) throws SQLException {
         String sql = "INSERT INTO medicamento (nombre_comercial, principio_activo, presentacion, concentracion, precio_unitario, stock_actual, stock_minimo, requiere_receta) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {

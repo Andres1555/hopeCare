@@ -1,4 +1,4 @@
-package com.esperanza.hopecare.ui.Auth;
+package com.esperanza.hopecare.Auth.view;
 
 import com.esperanza.hopecare.common.db.DatabaseConnection;
 import com.esperanza.hopecare.modules.Auth.DTO.RegistroDTO;

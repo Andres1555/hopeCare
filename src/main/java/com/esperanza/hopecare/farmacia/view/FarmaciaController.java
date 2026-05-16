@@ -8,11 +8,14 @@ import com.esperanza.hopecare.modules.medicamentos_lab.model.Medicamento;
 import com.esperanza.hopecare.modules.medicamentos_lab.model.Receta;
 import com.esperanza.hopecare.modules.medicamentos_lab.model.EntregaMedicamento;
 import com.esperanza.hopecare.modules.medicamentos_lab.service.InventarioService;
+import com.esperanza.hopecare.common.db.DatabaseConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 
 public class FarmaciaController {
@@ -44,6 +47,8 @@ public class FarmaciaController {
     @FXML private TextField txtIdMedicamento;
     @FXML private TextField txtCantidad;
     @FXML private Button btnEntregar;
+    @FXML private Button btnEliminarMedicamento;
+    @FXML private Button btnCancelarEntrega;
 
     private GestionClinicaFacade facade;
     private MedicamentoDAO medicamentoDAO;
@@ -82,7 +87,7 @@ public class FarmaciaController {
 
     private void configurarColumnasInventario() {
         colMedicamentoId.setCellValueFactory(new PropertyValueFactory<>("idMedicamento"));
-        colMedicamentoNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
+        colMedicamentoNombre.setCellValueFactory(new PropertyValueFactory<>("nombreComercial"));
         colStockActual.setCellValueFactory(new PropertyValueFactory<>("stockActual"));
         colStockMinimo.setCellValueFactory(new PropertyValueFactory<>("stockMinimo"));
 
@@ -348,5 +353,76 @@ public class FarmaciaController {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    @FXML
+    private void eliminarMedicamentoClick() {
+        Medicamento selected = tblInventario.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            mostrarAlerta("Advertencia", "Seleccione un medicamento de la tabla", Alert.AlertType.WARNING);
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirmar eliminación");
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿Está seguro de eliminar el medicamento '" + selected.getNombreComercial() + "'?");
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try (Connection conn = DatabaseConnection.getConnection()) {
+                    conn.setAutoCommit(false);
+                    boolean ok = medicamentoDAO.eliminar(selected.getIdMedicamento(), conn);
+                    if (ok) {
+                        conn.commit();
+                        mostrarAlerta("Éxito", "Medicamento eliminado correctamente", Alert.AlertType.INFORMATION);
+                        cargarInventario();
+                    } else {
+                        conn.rollback();
+                        mostrarAlerta("Error", "No se pudo eliminar el medicamento", Alert.AlertType.ERROR);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    mostrarAlerta("Error", "Error de base de datos: " + e.getMessage(), Alert.AlertType.ERROR);
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void cancelarEntregaClick() {
+        EntregaMedicamento selected = tblEntregas.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            mostrarAlerta("Advertencia", "Seleccione una entrega de la tabla", Alert.AlertType.WARNING);
+            return;
+        }
+
+        if (selected.isFacturado()) {
+            mostrarAlerta("Error", "No se puede cancelar una entrega que ya ha sido facturada", Alert.AlertType.ERROR);
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirmar cancelación");
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿Está seguro de cancelar esta entrega? El stock del medicamento será revertido.");
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try (Connection conn = DatabaseConnection.getConnection()) {
+                    conn.setAutoCommit(false);
+                    boolean ok = entregaDAO.eliminar(selected.getIdEntrega(), conn);
+                    if (ok) {
+                        conn.commit();
+                        mostrarAlerta("Éxito", "Entrega cancelada y stock revertido", Alert.AlertType.INFORMATION);
+                        cargarDatos();
+                    } else {
+                        conn.rollback();
+                        mostrarAlerta("Error", "No se pudo cancelar la entrega", Alert.AlertType.ERROR);
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    mostrarAlerta("Error", "Error de base de datos: " + e.getMessage(), Alert.AlertType.ERROR);
+                }
+            }
+        });
     }
 }
