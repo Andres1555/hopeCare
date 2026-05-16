@@ -21,6 +21,7 @@ module com.esperanza.hopecare {
     opens com.esperanza.hopecare.modules.pacientes_medicos.model to javafx.base;
     opens com.esperanza.hopecare.modules.dashboard.model to javafx.base;
     opens com.esperanza.hopecare.common.model to javafx.base;
+    opens com.esperanza.hopecare.modules.facturacion.dto to javafx.base;
     opens com.esperanza.hopecare.modules.Auth.model to javafx.base;
 
     exports com.esperanza.hopecare;
