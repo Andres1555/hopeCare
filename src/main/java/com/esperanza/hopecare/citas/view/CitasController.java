@@ -1,6 +1,7 @@
 package com.esperanza.hopecare.citas.view;
 
 import com.esperanza.hopecare.modules.citas_consultas.dao.CitaDAO;
+import com.esperanza.hopecare.modules.citas_consultas.dao.ConsultaDAO;
 import com.esperanza.hopecare.modules.citas_consultas.model.Cita;
 import com.esperanza.hopecare.modules.citas_consultas.presenter.CitaPresenter;
 import com.esperanza.hopecare.modules.citas_consultas.view.ICitaView;
@@ -403,6 +404,9 @@ public class CitasController implements ICitaView {
             cita.setEstado(nuevoEstado);
 
             if (citaDAO.actualizarCita(cita)) {
+                if ("ATENDIDA".equals(nuevoEstado)) {
+                    new ConsultaDAO().insertarSiNoExiste(cita.getIdCita());
+                }
                 mostrarMensajeExito("Cita actualizada correctamente.");
                 dialog.close();
                 presenter.cargarCitasExistentes();

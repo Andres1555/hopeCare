@@ -57,4 +57,22 @@ public class ConsultaDAO {
             } catch (SQLException e) { e.printStackTrace(); }
         }
     }
+
+    public void insertarSiNoExiste(int idCita) {
+        String sqlCheck = "SELECT COUNT(*) FROM consulta WHERE id_cita = ?";
+        String sqlInsert = "INSERT INTO consulta (id_cita, diagnostico, sintomas, tratamiento, notas_medicas, fecha_consulta, facturado, precio) VALUES (?, '', '', '', '', datetime('now', 'localtime'), 0, 0.0)";
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {
+                ps.setInt(1, idCita);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) return;
+            }
+            try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
+                ps.setInt(1, idCita);
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
