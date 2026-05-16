@@ -85,6 +85,9 @@ public class CitaConsoleView implements ICitaView {
     }
 
     @Override
+    public double getPrecio() { return 0.0; }
+
+    @Override
     public LocalTime getHoraSeleccionada() {
         if (ultimosHorarios == null || ultimosHorarios.isEmpty()) {
             System.out.print("Hora (HH:MM): ");

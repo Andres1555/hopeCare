@@ -209,6 +209,10 @@ public class CitasController implements ICitaView {
         cbHorarios.setPrefWidth(200);
         cbHorarios.setDisable(true);
 
+        TextField txtPrecioCita = new TextField();
+        txtPrecioCita.setPromptText("0.00");
+        txtPrecioCita.setPrefWidth(120);
+
         Button btnBuscar = new Button("Buscar horarios");
         Button btnReservar = new Button("Reservar cita");
         btnReservar.setDisable(true);
@@ -290,6 +294,13 @@ public class CitasController implements ICitaView {
                 String s = cbHorarios.getValue();
                 return s != null ? LocalTime.parse(s) : null;
             }
+            @Override public double getPrecio() {
+                try {
+                    return Double.parseDouble(txtPrecioCita.getText().trim().isEmpty() ? "0" : txtPrecioCita.getText().trim());
+                } catch (NumberFormatException e) {
+                    return 0.0;
+                }
+            }
         });
 
         tvMedicos.getSelectionModel().selectedItemProperty().addListener((obs, old, sel) -> {
@@ -347,6 +358,8 @@ public class CitasController implements ICitaView {
         horarioGrid.add(new Label("Horario:"), 0, 1);
         horarioGrid.add(cbHorarios, 1, 1);
         horarioGrid.add(btnReservar, 2, 1);
+        horarioGrid.add(new Label("Costo ($):"), 0, 2);
+        horarioGrid.add(txtPrecioCita, 1, 2);
 
         VBox content = new VBox(15, tablesRow, horarioGrid);
         content.setStyle("-fx-padding: 15;");
@@ -526,4 +539,7 @@ public class CitasController implements ICitaView {
 
     @Override
     public LocalTime getHoraSeleccionada() { return null; }
+
+    @Override
+    public double getPrecio() { return 0.0; }
 }
