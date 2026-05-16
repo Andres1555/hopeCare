@@ -21,7 +21,6 @@ public class ConsultaController implements IConsultaView {
 
     private ConsultaPresenter presenter;
     private ObservableList<String> citasList;
-    private int idCitaSeleccionada = -1;
 
     @FXML
     public void initialize() {
@@ -39,7 +38,13 @@ public class ConsultaController implements IConsultaView {
 
     @Override
     public int getIdCitaSeleccionada() {
-        return idCitaSeleccionada;
+        String selected = cbCitasPendientes.getValue();
+        if (selected == null || selected.isEmpty()) return -1;
+        try {
+            return Integer.parseInt(selected.split(" - ")[0]);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     @Override
@@ -101,7 +106,6 @@ public class ConsultaController implements IConsultaView {
 
     @Override
     public void limpiarSeleccionCita() {
-        idCitaSeleccionada = -1;
         cbCitasPendientes.getSelectionModel().clearSelection();
     }
 

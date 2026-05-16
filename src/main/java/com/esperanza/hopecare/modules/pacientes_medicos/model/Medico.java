@@ -37,4 +37,10 @@ public class Medico extends Persona {
 
     public String getNombreEspecialidad() { return nombreEspecialidad; }
     public void setNombreEspecialidad(String nombreEspecialidad) { this.nombreEspecialidad = nombreEspecialidad; }
+
+    @Override
+    public String toString() {
+        return (getNombre() != null ? getNombre() + " " + getApellido() : "Médico #" + idMedico)
+               + (nombreEspecialidad != null ? " - " + nombreEspecialidad : "");
+    }
 }
